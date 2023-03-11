@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotNetClassGeneration", "dotNetClassGeneration\dotNetClassGeneration.csproj", "{8304FA1A-3CD7-4A12-BF28-FD612388374A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CVESearch", "CVESearch\CVESearch.csproj", "{58D1F74D-0DE6-49F9-BCF0-06EF4038AFAD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8304FA1A-3CD7-4A12-BF28-FD612388374A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8304FA1A-3CD7-4A12-BF28-FD612388374A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8304FA1A-3CD7-4A12-BF28-FD612388374A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8304FA1A-3CD7-4A12-BF28-FD612388374A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58D1F74D-0DE6-49F9-BCF0-06EF4038AFAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58D1F74D-0DE6-49F9-BCF0-06EF4038AFAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58D1F74D-0DE6-49F9-BCF0-06EF4038AFAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58D1F74D-0DE6-49F9-BCF0-06EF4038AFAD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {177A5EF2-56EA-4E64-A83E-75FAA5A6DCED}
+	EndGlobalSection
+EndGlobal
