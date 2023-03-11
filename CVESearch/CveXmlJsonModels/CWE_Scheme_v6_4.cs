@@ -130,7 +130,6 @@ namespace CVESearch.CveXmlJsonModels
     [System.Xml.Serialization.XmlTypeAttribute(Namespace = "http://cwe.mitre.org/cwe-6")]
     public class WeaknessType
     {
-
         private string descriptionField;
 
         private StructuredTextType extended_DescriptionField;

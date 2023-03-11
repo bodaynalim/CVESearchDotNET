@@ -34,32 +34,38 @@ namespace CVESearch.MongoModels
 
         public string CvssVector { get; set; }
 
-        public ICollection<string> References { get; set; }
+        public string[] References { get; set; }
         
-        public ICollection<string> VulnerableConfigurations { get; set; }
+        public string[] VulnerableConfigurations { get; set; }
 
-        public ICollection<string> VulnerableProducts { get; set; }
+        public string[] VulnerableProducts { get; set; }
 
-        public ICollection<string> Products { get; set; }
+        public string[] VulnerableConfigurationsTrimmed { get; set; }
 
-        public ICollection<string> Vendors { get; set; }
+        public string[] VulnerableProductsTrimmed { get; set; }
+
+        public string[] Products { get; set; }
+
+        public string[] Vendors { get; set; }
+
+        public string[] VulnerableConfigurationCpeTwoTwo { get; set; }
     }
 
     public class Access
     {
-        public AccessVectorType Vector { get; set; }
+        public string Vector { get; set; }
         
-        public AccessComplexityType Complexity { get; set; }
+        public string Complexity { get; set; }
         
-        public AuthenticationType Authentication { get; set; }
+        public string Authentication { get; set; }
     }
 
     public class Impact
     {
-        public CiaType Confidentiality { get; set; }
+        public string Confidentiality { get; set; }
 
-        public CiaType Integrity { get; set; }
+        public string Integrity { get; set; }
 
-        public CiaType Availability { get; set; }
+        public string Availability { get; set; }
     }
 }
