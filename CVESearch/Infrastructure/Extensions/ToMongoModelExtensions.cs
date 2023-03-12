@@ -1,6 +1,7 @@
 ﻿using CVESearch.CveXmlJsonModels;
 using CVESearch.MongoModels;
 using MyNamespace;
+using System;
 using System.Linq;
 
 namespace CVESearch.Infrastructure.Extensions
@@ -54,6 +55,11 @@ namespace CVESearch.Infrastructure.Extensions
         {
             return new CveMongoModel
             {
+                Published = DateTime.Parse(cveItem.PublishedDate).ToUniversalTime(),
+                Modified = DateTime.Parse(cveItem.LastModifiedDate).ToUniversalTime(),
+                CveId = cveItem.Cve.CVE_data_meta.ID,
+                Assigner = cveItem.Cve.CVE_data_meta.ASSIGNER,
+                Cwe = cveItem.Cve.Problemtype.Problemtype_data.FirstOrDefault().Description.FirstOrDefault().Value
 
             };
         }

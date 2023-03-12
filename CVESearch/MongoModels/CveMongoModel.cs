@@ -18,21 +18,9 @@ namespace CVESearch.MongoModels
 
         public string Summary { get; set; }
 
-        public double? Cvss { get; set; }
+        public CvssTwo Cvss2 { get; set; }
 
-        public DateTime CvssTime { get; set; }
-
-        public Access Access { get; set; }
-
-        public Impact Impact { get; set; }
-
-        public double? Cvss3 { get; set; }
-
-        public double? ExploitabilityScore { get; set; }
-
-        public double? ImpactScore { get; set; }
-
-        public string CvssVector { get; set; }
+        public CvssThree Cvss3 { get; set; }
 
         public string[] References { get; set; }
         
@@ -49,6 +37,40 @@ namespace CVESearch.MongoModels
         public string[] Vendors { get; set; }
 
         public string[] VulnerableConfigurationCpeTwoTwo { get; set; }
+    }
+
+    public class CvssThree
+    {
+        public Access Access { get; set; }
+
+        public Impact Impact { get; set; }
+
+        public double? BaseScore { get; set; }
+
+        public double? ExploitabilityScore { get; set; }
+
+        public double? ImpactScore { get; set; }
+
+        public string VectorString { get; set; }
+
+        public string BaseSeverity { get; set; }
+    }
+
+    public class CvssTwo
+    {
+        public Access Access { get; set; }
+
+        public Impact Impact { get; set; }
+
+        public double? BaseScore { get; set; }
+
+        public double? ExploitabilityScore { get; set; }
+
+        public double? ImpactScore { get; set; }
+
+        public string VectorString { get; set; }
+
+        public string Severity { get; set; }
     }
 
     public class Access
