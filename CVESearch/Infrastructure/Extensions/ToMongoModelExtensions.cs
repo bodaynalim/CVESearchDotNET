@@ -1,5 +1,6 @@
 ﻿using CVESearch.CveXmlJsonModels;
 using CVESearch.MongoModels;
+using MyNamespace;
 using System.Linq;
 
 namespace CVESearch.Infrastructure.Extensions
@@ -46,6 +47,14 @@ namespace CVESearch.Infrastructure.Extensions
                     Name = t.Taxonomy_Name.ToString()
 
                 }).ToArray()
+            };
+        }
+
+        public static CveMongoModel ToCveMongoModel(this Def_cve_item cveItem)
+        {
+            return new CveMongoModel
+            {
+
             };
         }
     }
