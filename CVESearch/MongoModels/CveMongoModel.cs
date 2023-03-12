@@ -1,6 +1,4 @@
-﻿using CVESearch.CveXmlJsonModels;
-using System;
-using System.Collections.Generic;
+﻿using System;
 
 namespace CVESearch.MongoModels
 {
@@ -41,7 +39,7 @@ namespace CVESearch.MongoModels
 
     public class CvssThree
     {
-        public Access Access { get; set; }
+        public AccessThree Access { get; set; }
 
         public Impact Impact { get; set; }
 
@@ -54,11 +52,13 @@ namespace CVESearch.MongoModels
         public string VectorString { get; set; }
 
         public string BaseSeverity { get; set; }
+
+        public string Version { get; set; }
     }
 
     public class CvssTwo
     {
-        public Access Access { get; set; }
+        public AccessTwo Access { get; set; }
 
         public Impact Impact { get; set; }
 
@@ -71,15 +71,30 @@ namespace CVESearch.MongoModels
         public string VectorString { get; set; }
 
         public string Severity { get; set; }
+
+        public string Version { get; set; }
     }
 
-    public class Access
+    public class AccessTwo
     {
         public string Vector { get; set; }
         
         public string Complexity { get; set; }
         
         public string Authentication { get; set; }
+    }
+
+    public class AccessThree
+    {
+        public string Vector { get; set; }
+
+        public string Complexity { get; set; }
+
+        public string PrivilegesRequired { get; set; }
+
+        public string UserInteraction { get; set; }
+
+        public string Scope { get; set; }
     }
 
     public class Impact

@@ -38,7 +38,7 @@ namespace CVESearch.Infrastructure.Extensions
                 Name = attackPatternType.Name,
                 Prerequisites = attackPatternType.Prerequisites.Select(p => p.Any.FirstOrDefault().Value).ToArray(),
                 RelatedCapecs = attackPatternType.Related_Attack_Patterns.Select(a => a.CAPEC_ID).ToArray(),
-                RelatedCwes= attackPatternType.Related_Weaknesses.Select(w => w.CWE_ID).ToArray(),
+                RelatedCwes = attackPatternType.Related_Weaknesses.Select(w => w.CWE_ID).ToArray(),
                 Severity = attackPatternType.Typical_Severity.ToString(),
                 Solutions = attackPatternType.Mitigations.Select(p => p.Any.FirstOrDefault().Value).ToArray(),
                 Taxonomy = attackPatternType.Taxonomy_Mappings.Select(t => new Taxonomy
@@ -59,9 +59,52 @@ namespace CVESearch.Infrastructure.Extensions
                 Modified = DateTime.Parse(cveItem.LastModifiedDate).ToUniversalTime(),
                 CveId = cveItem.Cve.CVE_data_meta.ID,
                 Assigner = cveItem.Cve.CVE_data_meta.ASSIGNER,
-                Cwe = cveItem.Cve.Problemtype.Problemtype_data.FirstOrDefault().Description.FirstOrDefault().Value
-
+                Cwe = cveItem.Cve.Problemtype.Problemtype_data.FirstOrDefault().Description.FirstOrDefault().Value,
+                Cvss2 = new CvssTwo
+                {
+                    Access = new AccessTwo
+                    {
+                        Authentication = cveItem.Impact.BaseMetricV2.CvssV2.Authentication.ToString(),
+                        Complexity = cveItem.Impact.BaseMetricV2.CvssV2.AccessComplexity.ToString(),
+                        Vector = cveItem.Impact.BaseMetricV2.CvssV2.AccessVector.ToString()
+                    },
+                    VectorString = cveItem.Impact.BaseMetricV2.CvssV2.VectorString,
+                    BaseScore = cveItem.Impact.BaseMetricV2.CvssV2.BaseScore,
+                    ExploitabilityScore = cveItem.Impact.BaseMetricV2.ExploitabilityScore,
+                    Severity = cveItem.Impact.BaseMetricV2.Severity,
+                    ImpactScore = cveItem.Impact.BaseMetricV2.ImpactScore,
+                    Impact = new Impact
+                    {
+                        Availability = cveItem.Impact.BaseMetricV2.CvssV2.AvailabilityImpact.ToString(),
+                        Confidentiality = cveItem.Impact.BaseMetricV2.CvssV2.ConfidentialityImpact.ToString(),
+                        Integrity = cveItem.Impact.BaseMetricV2.CvssV2.IntegrityImpact.ToString()
+                    },
+                    Version = cveItem.Impact.BaseMetricV2.CvssV2.Version.ToString()
+                },
+                Cvss3 = new CvssThree
+                {
+                    Access = new AccessThree
+                    {                        
+                        Complexity = cveItem.Impact.BaseMetricV3.CvssV3.AttackComplexity.ToString(),
+                        Vector = cveItem.Impact.BaseMetricV3.CvssV3.Version.ToString(),
+                        PrivilegesRequired = cveItem.Impact.BaseMetricV3.CvssV3.PrivilegesRequired.ToString(),
+                        Scope = cveItem.Impact.BaseMetricV3.CvssV3.Scope.ToString(),
+                        UserInteraction = cveItem.Impact.BaseMetricV3.CvssV3.UserInteraction.ToString(),
+                    },
+                    VectorString = cveItem.Impact.BaseMetricV3.CvssV3.VectorString,
+                    BaseScore = cveItem.Impact.BaseMetricV3.CvssV3.BaseScore,
+                    ExploitabilityScore = cveItem.Impact.BaseMetricV3.ExploitabilityScore,
+                    ImpactScore = cveItem.Impact.BaseMetricV3.ImpactScore,
+                    Impact = new Impact
+                    {
+                        Availability = cveItem.Impact.BaseMetricV3.CvssV3.AvailabilityImpact.ToString(),
+                        Confidentiality = cveItem.Impact.BaseMetricV3.CvssV3.ConfidentialityImpact.ToString(),
+                        Integrity = cveItem.Impact.BaseMetricV3.CvssV3.IntegrityImpact.ToString()
+                    },
+                    BaseSeverity = cveItem.Impact.BaseMetricV3.CvssV3.BaseSeverity.ToString(),
+                    Version = cveItem.Impact.BaseMetricV3.CvssV3.Version.ToString()
+                },
             };
         }
-    }
+    } 
 }
