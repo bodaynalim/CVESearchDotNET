@@ -1,8 +1,8 @@
 ﻿using CVESearch.CveXmlJsonModels;
 using CVESearch.MongoModels;
-using MyNamespace;
 using System;
 using System.Linq;
+using Reference = CVESearch.MongoModels.Reference;
 
 namespace CVESearch.Infrastructure.Extensions
 {
@@ -53,13 +53,32 @@ namespace CVESearch.Infrastructure.Extensions
 
         public static CveMongoModel ToCveMongoModel(this Def_cve_item cveItem)
         {
+            var cpesTwoThree = cveItem.Configurations.Nodes.SelectMany(s => s.Cpe_match)
+                                .Where(c => c.Vulnerable)
+                                .Select(s => new CpeTwoThree
+                                {
+                                    CpeUri = s.Cpe23Uri,
+                                    VersionEndExcluding = s.VersionEndExcluding,
+                                    VersionEndIncluding = s.VersionEndIncluding,
+                                    VersionStartExcluding = s.VersionStartExcluding,
+                                    VersionStartIncluding = s.VersionStartIncluding,
+                                    Vulnerable = s.Vulnerable
+                                }).ToArray();
+
+            var vendorsAndProducts = cpesTwoThree.Select(s => s.CpeUri.Split(':', StringSplitOptions.RemoveEmptyEntries))
+                .Select(v => new { Vendor = v[4], Software = v[5] })
+                .GroupBy(v => v.Vendor).Select(v => new VulnarableProducts { Vendor = v.Key, Softwares = v.Select(s => s.Software).Distinct().ToArray()}).ToArray();
+
             return new CveMongoModel
             {
                 Published = DateTime.Parse(cveItem.PublishedDate).ToUniversalTime(),
                 Modified = DateTime.Parse(cveItem.LastModifiedDate).ToUniversalTime(),
                 CveId = cveItem.Cve.CVE_data_meta.ID,
                 Assigner = cveItem.Cve.CVE_data_meta.ASSIGNER,
-                Cwe = cveItem.Cve.Problemtype.Problemtype_data.FirstOrDefault().Description.FirstOrDefault().Value,
+                Cwes = cveItem.Cve.Problemtype.Problemtype_data.Select(p => new ProblemData
+                {
+                    Cwes = p.Description.Select(d => d.Value).ToArray()
+                }).ToArray(),
                 Cvss2 = new CvssTwo
                 {
                     Access = new AccessTwo
@@ -104,6 +123,16 @@ namespace CVESearch.Infrastructure.Extensions
                     BaseSeverity = cveItem.Impact.BaseMetricV3.CvssV3.BaseSeverity.ToString(),
                     Version = cveItem.Impact.BaseMetricV3.CvssV3.Version.ToString()
                 },
+                References = cveItem.Cve.References.Reference_data.Select(r => new Reference
+                {
+                    Name = r.Name,
+                    Refsource = r.Refsource,
+                    Tags = r.Tags.ToArray(),
+                    Url = r.Url
+                }).ToArray(),
+                Summary = cveItem.Cve.Description.Description_data.Select(s => s.Value).JoinToString(" "),
+                VulnerableConfigurations = cpesTwoThree,
+                Products = vendorsAndProducts
             };
         }
     } 

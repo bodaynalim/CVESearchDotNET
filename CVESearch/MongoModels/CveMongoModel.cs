@@ -12,7 +12,7 @@ namespace CVESearch.MongoModels
 
         public DateTime Modified { get; set; }
 
-        public string Cwe { get; set; }
+        public ProblemData[] Cwes { get; set; }
 
         public string Summary { get; set; }
 
@@ -20,21 +20,11 @@ namespace CVESearch.MongoModels
 
         public CvssThree Cvss3 { get; set; }
 
-        public string[] References { get; set; }
+        public Reference[] References { get; set; }
         
-        public string[] VulnerableConfigurations { get; set; }
+        public CpeTwoThree[] VulnerableConfigurations { get; set; }
 
-        public string[] VulnerableProducts { get; set; }
-
-        public string[] VulnerableConfigurationsTrimmed { get; set; }
-
-        public string[] VulnerableProductsTrimmed { get; set; }
-
-        public string[] Products { get; set; }
-
-        public string[] Vendors { get; set; }
-
-        public string[] VulnerableConfigurationCpeTwoTwo { get; set; }
+        public VulnarableProducts[] Products { get; set; }
     }
 
     public class CvssThree
@@ -104,5 +94,43 @@ namespace CVESearch.MongoModels
         public string Integrity { get; set; }
 
         public string Availability { get; set; }
+    }
+
+    public class Reference
+    {
+        public string Url { get; set; }
+       
+        public string Name { get; set; }
+        
+        public string Refsource { get; set; }
+
+        public string[] Tags { get; set; }
+    }
+
+    public class ProblemData
+    {
+        public string[] Cwes { get; set; }
+    }
+
+    public class CpeTwoThree
+    {        
+        public string VersionStartExcluding { get; set; }
+        
+        public string VersionStartIncluding { get; set; }
+        
+        public string VersionEndExcluding { get; set; }
+        
+        public string VersionEndIncluding { get; set; }
+
+        public bool Vulnerable { get; set; }
+
+        public string CpeUri { get; set; }
+    }
+
+    public class VulnarableProducts
+    {
+        public string Vendor { get; set; }
+
+        public string[] Softwares { get; set; }
     }
 }

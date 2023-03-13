@@ -5,7 +5,7 @@
 //----------------------
 
 
-namespace MyNamespace
+namespace CVESearch.CveXmlJsonModels
 {
     #pragma warning disable // Disable all warnings
 
