@@ -1,14 +1,21 @@
 ﻿using Cve.DomainModels.MongoModels;
+using System.Threading.Tasks;
 
 namespace Cve.Application.Helpers
 {
     public interface IVulnerabilitiesJsonHelper
     {
         /// <summary>
-        /// Populate database with items
+        /// Populate initially database with items
         /// </summary>
         /// <returns></returns>
-        Task PopulateDatabase();
+        Task PopulateDatabaseInitially();
+
+        /// <summary>
+        /// Load new CVEs items
+        /// </summary>
+        /// <returns></returns>
+        Task LoadNewAndModifiedCves();
 
         /// <summary>
         /// Deserialize CVEs json and save into Mongo DB

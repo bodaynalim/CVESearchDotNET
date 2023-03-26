@@ -80,7 +80,9 @@ namespace CVESearch
 
             app.UseHangfireDashboard("/hangfire");
 
-            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabase(), Cron.Never);
+            BackgroundJob.Enqueue<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially());
+
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially(), Cron.Never);
 
             app.MapControllers();
 

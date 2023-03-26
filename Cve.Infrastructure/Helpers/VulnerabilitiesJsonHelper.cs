@@ -26,14 +26,22 @@ namespace Cve.Infrastructure.Helpers
             _capecMongoService = capecMongoService;
         }
 
-        public async Task PopulateDatabase()
+        public async Task PopulateDatabaseInitially()
         {
-            await DeserializeAndSaveCveJson(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\nvdcve-1.1-2020.json");
-            await DeserializeAndSaveCveJson(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\nvdcve-1.1-2021.json");
-            await DeserializeAndSaveCveJson(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\nvdcve-1.1-2022.json");
-            await DeserializeAndSaveCveJson(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\nvdcve-1.1-2023.json");
-            await DeserializeAndSaveCweXml(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\cwec_v4.4.xml");
-            await DeserializeAndSaveCapecXml(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\capec_v3.7.xml");
+            if (await _cveMongoService.ContainsAnyItems())
+                return;
+
+            await DeserializeAndSaveCveJson(@"Data\nvdcve-1.1-2020.json");
+            await DeserializeAndSaveCveJson(@"Data\nvdcve-1.1-2021.json");
+            await DeserializeAndSaveCveJson(@"Data\nvdcve-1.1-2022.json");
+            await DeserializeAndSaveCveJson(@"Data\nvdcve-1.1-2023.json");
+            await DeserializeAndSaveCweXml(@"Data\cwec_v4.4.xml");
+            await DeserializeAndSaveCapecXml(@"Data\capec_v3.7.xml");
+        }
+
+        public async Task LoadNewAndModifiedCves()
+        {
+            // TODO
         }
 
         public async Task DeserializeAndSaveCveJson(string pathToJson)

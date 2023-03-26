@@ -5,6 +5,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\capec_v3.7.xml" />
+    <None Remove="Data\cwec_v4.4.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Data\capec_v3.7.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\cwec_v4.4.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.15" />
     <PackageReference Include="MongoDB.Bson" Version="2.19.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -20,6 +34,21 @@
   <ItemGroup>
     <ProjectReference Include="..\Cve.DomainModels\Cve.DomainModels.csproj" />
     <ProjectReference Include="..\Cve.Infrastructure\Cve.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Data\nvdcve-1.1-2020.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Data\nvdcve-1.1-2021.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Data\nvdcve-1.1-2022.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Data\nvdcve-1.1-2023.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

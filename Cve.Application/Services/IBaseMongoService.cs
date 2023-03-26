@@ -6,5 +6,7 @@ namespace Cve.Application.Services
         where T : BaseMongoModel
     {
         Task<T> SaveItemToDatabase(T item);
+
+        Task<bool> ContainsAnyItems();
     }
 }

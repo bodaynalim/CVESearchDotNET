@@ -41,5 +41,10 @@ namespace Cve.Infrastructure.Services
 
             return item;
         }
+
+        public virtual async Task<bool> ContainsAnyItems()
+        {
+            return await Collection.CountDocumentsAsync(FilterDefinition<T>.Empty) > 0;
+        }
     }
 }
