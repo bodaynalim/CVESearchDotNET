@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NJsonSchema.CodeGeneration.CSharp" Version="10.8.0" />
+    <ProjectReference Include="..\Cve.Infrastructure\Cve.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

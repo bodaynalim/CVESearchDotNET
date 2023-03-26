@@ -5,7 +5,7 @@
 //----------------------
 
 
-namespace CVESearch.CveXmlJsonModels
+namespace Cve.DomainModels.CveXmlJsonModels
 {
     #pragma warning disable // Disable all warnings
 
@@ -155,7 +155,7 @@ namespace CVESearch.CveXmlJsonModels
         /// CVSS V2.0 score.
         /// </summary>
         [Newtonsoft.Json.JsonProperty("baseMetricV2", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public BaseMetricV2 BaseMetricV2 { get; set; }
+        public BaseMetricV2 BaseMetricV2 { get; set; } 
 
 
 
@@ -174,7 +174,7 @@ namespace CVESearch.CveXmlJsonModels
     /// Defines a vulnerability in the NVD data feed.
     /// </summary>
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.8.0.0 (Newtonsoft.Json v9.0.0.0)")]
-    public class Def_cve_item
+    public class CveItemModel
     {
         [Newtonsoft.Json.JsonProperty("cve", Required = Newtonsoft.Json.Required.Always)]
         [System.ComponentModel.DataAnnotations.Required]
@@ -1170,7 +1170,7 @@ namespace CVESearch.CveXmlJsonModels
         /// </summary>
         [Newtonsoft.Json.JsonProperty("CVE_Items", Required = Newtonsoft.Json.Required.Always)]
         [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<Def_cve_item> CVE_Items { get; set; } = new System.Collections.ObjectModel.Collection<Def_cve_item>();
+        public System.Collections.Generic.ICollection<CveItemModel> CVE_Items { get; set; } = new System.Collections.ObjectModel.Collection<CveItemModel>();
 
 
 

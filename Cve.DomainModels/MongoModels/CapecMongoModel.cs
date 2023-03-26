@@ -1,6 +1,4 @@
-﻿using CVESearch.CveXmlJsonModels;
-
-namespace CVESearch.MongoModels
+﻿namespace Cve.DomainModels.MongoModels
 {
     public class CapecMongoModel : BaseMongoModel
     {

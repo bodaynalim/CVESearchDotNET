@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 
-namespace CVESearch.MongoModels
+namespace Cve.DomainModels.MongoModels
 {
     public class BaseMongoModel
     {

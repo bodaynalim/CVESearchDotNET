@@ -1,7 +1,7 @@
-﻿using CVESearch.CveXmlJsonModels;
+﻿using Cve.DomainModels.CveXmlJsonModels;
 using System.Collections.Generic;
 
-namespace CVESearch.MongoModels
+namespace Cve.DomainModels.MongoModels
 {
     public class CweMongoModel : BaseMongoModel
     {

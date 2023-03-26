@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CVESearch.MongoModels
+namespace Cve.DomainModels.MongoModels
 {
     public class CveMongoModel : BaseMongoModel
     {
@@ -132,5 +132,12 @@ namespace CVESearch.MongoModels
         public string Vendor { get; set; }
 
         public string[] Softwares { get; set; }
+    }
+
+    public class SoftwareWithVersions
+    {
+        public string SoftwareName { get; set; }
+
+        public string[] Versions { get; set; }
     }
 }

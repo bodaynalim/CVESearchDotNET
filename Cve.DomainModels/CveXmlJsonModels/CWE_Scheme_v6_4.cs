@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CVESearch.CveXmlJsonModels
+namespace Cve.DomainModels.CveXmlJsonModels
 {
     [Serializable()]
     [System.Diagnostics.DebuggerStepThrough()]

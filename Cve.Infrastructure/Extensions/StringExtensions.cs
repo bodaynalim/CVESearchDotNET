@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CVESearch.Infrastructure.Extensions
+namespace Cve.Infrastructure.Extensions
 {
     public static class StringExtensions
     {
