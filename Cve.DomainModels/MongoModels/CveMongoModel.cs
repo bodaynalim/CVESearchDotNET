@@ -131,7 +131,7 @@ namespace Cve.DomainModels.MongoModels
     {
         public string Vendor { get; set; }
 
-        public string[] Softwares { get; set; }
+        public SoftwareWithVersions[] Softwares { get; set; }
     }
 
     public class SoftwareWithVersions
