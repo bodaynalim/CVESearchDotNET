@@ -5,9 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.15" />
     <PackageReference Include="MongoDB.Bson" Version="2.19.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.7.31" />
+    <PackageReference Include="Hangfire.MemoryStorage" Version="1.7.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cve.DomainModels\Cve.DomainModels.csproj" />
+    <ProjectReference Include="..\Cve.Infrastructure\Cve.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

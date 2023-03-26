@@ -26,6 +26,16 @@ namespace Cve.Infrastructure.Helpers
             _capecMongoService = capecMongoService;
         }
 
+        public async Task PopulateDatabase()
+        {
+            await DeserializeAndSaveCveJson(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\nvdcve-1.1-2020.json");
+            await DeserializeAndSaveCveJson(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\nvdcve-1.1-2021.json");
+            await DeserializeAndSaveCveJson(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\nvdcve-1.1-2022.json");
+            await DeserializeAndSaveCveJson(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\nvdcve-1.1-2023.json");
+            await DeserializeAndSaveCweXml(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\cwec_v4.4.xml");
+            await DeserializeAndSaveCapecXml(@"C:\Users\BohdanNalyvaiko(Appt\Downloads\capec_v3.7.xml");
+        }
+
         public async Task DeserializeAndSaveCveJson(string pathToJson)
         {
             using var stream = new FileStream(pathToJson, FileMode.Open, FileAccess.Read);

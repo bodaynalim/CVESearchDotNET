@@ -5,6 +5,6 @@ namespace Cve.Application.Services
     public interface IBaseMongoService<T>
         where T : BaseMongoModel
     {
-        Task SaveItemToDatabase(T item);
+        Task<T> SaveItemToDatabase(T item);
     }
 }

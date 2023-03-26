@@ -5,6 +5,12 @@ namespace Cve.Application.Helpers
     public interface IVulnerabilitiesJsonHelper
     {
         /// <summary>
+        /// Populate database with items
+        /// </summary>
+        /// <returns></returns>
+        Task PopulateDatabase();
+
+        /// <summary>
         /// Deserialize CVEs json and save into Mongo DB
         /// </summary>
         /// <param name="pathToCve">Path to JSON</param>

@@ -1,5 +1,6 @@
 ﻿using Cve.Application.Services;
 using Cve.DomainModels.MongoModels;
+using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,11 +9,10 @@ using System.Threading.Tasks;
 
 namespace Cve.Infrastructure.Services
 {
-    public class CweMongoService : ICweMongoService
+    public class CweMongoService : BaseMongoService<CweMongoModel>, ICweMongoService
     {
-        public async Task SaveItemToDatabase(CweMongoModel item)
+        public CweMongoService(IMongoDatabase db) : base(db, "Cwes")
         {
-            // Todo: implement
         }
     }
 }
