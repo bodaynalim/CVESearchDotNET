@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
@@ -31,12 +32,33 @@ namespace Cve.Infrastructure.Helpers
             if (await _cveMongoService.ContainsAnyItems())
                 return;
 
-            await DeserializeAndSaveCveJson(@"Data\nvdcve-1.1-2020.json");
-            await DeserializeAndSaveCveJson(@"Data\nvdcve-1.1-2021.json");
-            await DeserializeAndSaveCveJson(@"Data\nvdcve-1.1-2022.json");
-            await DeserializeAndSaveCveJson(@"Data\nvdcve-1.1-2023.json");
-            await DeserializeAndSaveCweXml(@"Data\cwec_v4.4.xml");
-            await DeserializeAndSaveCapecXml(@"Data\capec_v3.7.xml");
+            var tempPath = Path.GetTempPath();
+            var firstJson = Path.Combine(tempPath, Path.GetRandomFileName());
+            var secondJson = Path.Combine(tempPath, Path.GetRandomFileName());
+            var thirdJson = Path.Combine(tempPath, Path.GetRandomFileName());
+            var fourthJson = Path.Combine(tempPath, Path.GetRandomFileName());
+
+            try
+            { 
+                ZipFile.ExtractToDirectory("Data\\nvdcve-1.1-2020.json.zip", firstJson, true);
+                ZipFile.ExtractToDirectory("Data\\nvdcve-1.1-2021.json.zip", secondJson, true);
+                ZipFile.ExtractToDirectory("Data\\nvdcve-1.1-2022.json.zip", thirdJson, true);
+                ZipFile.ExtractToDirectory("Data\\nvdcve-1.1-2023.json.zip", fourthJson, true);
+
+                await DeserializeAndSaveCveJson($"{firstJson}\\nvdcve-1.1-2020.json");
+                await DeserializeAndSaveCveJson($"{secondJson}\\nvdcve-1.1-2021.json");
+                await DeserializeAndSaveCveJson($"{thirdJson}\\nvdcve-1.1-2022.json");
+                await DeserializeAndSaveCveJson($"{fourthJson}\\nvdcve-1.1-2023.json");
+                await DeserializeAndSaveCweXml(@"Data\cwec_v4.4.xml");
+                await DeserializeAndSaveCapecXml(@"Data\capec_v3.7.xml");
+            }
+            finally
+            {
+                File.Delete($"{firstJson}\\nvdcve-1.1-2020.json");
+                File.Delete($"{secondJson}\\nvdcve-1.1-2021.json");
+                File.Delete($"{thirdJson}\\nvdcve-1.1-2022.json");
+                File.Delete($"{fourthJson}\\nvdcve-1.1-2023.json");
+            }
         }
 
         public async Task LoadNewAndModifiedCves()
