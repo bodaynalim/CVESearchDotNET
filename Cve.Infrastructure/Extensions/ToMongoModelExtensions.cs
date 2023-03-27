@@ -65,14 +65,14 @@ namespace Cve.Infrastructure.Extensions
                                 }).ToArray();
 
             var vendorsAndProducts = cpesTwoThree.Select(s => s.CpeUri.Split(':', StringSplitOptions.RemoveEmptyEntries))
-                .Select(v => new { Vendor = v[3], Software = v[4], Version = v[5] })
+                .Select(v => new { Vendor = v[3], Software = v[4], Version = v[5], Os = v[10], Bitness = v[11] })
                 .GroupBy(v => v.Vendor).Select(v => new VulnarableProducts 
                 { 
                     Vendor = v.Key,
                     Softwares = v.GroupBy(s => s.Software).Select(g => new SoftwareWithVersions
                     {
                         SoftwareName = g.Key,
-                        Versions = g.Select(v => v.Version).Distinct().ToArray()
+                        Versions = g.Select(v => new VersionOs { Version = v.Version, Os = v.Os, Bitness = v.Bitness }).Distinct().ToArray()
                     }).ToArray()
                 }).ToArray();
 

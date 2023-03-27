@@ -138,6 +138,15 @@ namespace Cve.DomainModels.MongoModels
     {
         public string SoftwareName { get; set; }
 
-        public string[] Versions { get; set; }
+        public VersionOs[] Versions { get; set; }
+    }
+
+    public class VersionOs
+    {
+        public string Version { get; set; }
+
+        public string Os { get; set; }
+
+        public string Bitness { get; set; }
     }
 }
