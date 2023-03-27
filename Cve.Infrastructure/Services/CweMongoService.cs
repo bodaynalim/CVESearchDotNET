@@ -13,6 +13,8 @@ namespace Cve.Infrastructure.Services
     {
         public CweMongoService(IMongoDatabase db) : base(db, "Cwes")
         {
+            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Ascending(c => c.CweId)));
+            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Descending(c => c.RelatedCwes)));
         }
     }
 }
