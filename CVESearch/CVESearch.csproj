@@ -28,10 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Cve.DomainModels\Cve.DomainModels.csproj" />
     <ProjectReference Include="..\Cve.Infrastructure\Cve.Infrastructure.csproj" />
   </ItemGroup>

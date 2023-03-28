@@ -10,7 +10,14 @@ namespace Cve.Application.Services
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        Task<T> SaveItemToDatabase(T item);
+        Task<T> CreateNewItem(T item);
+
+        /// <summary>
+        /// Create or replace existing one item
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        Task<T> CreateOrUpdateExisting(T item);
 
         /// <summary>
         /// Check if collection contains any item

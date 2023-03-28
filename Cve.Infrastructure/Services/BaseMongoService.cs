@@ -35,9 +35,17 @@ namespace Cve.Infrastructure.Services
         protected IMongoCollection<T> Collection { get; }
 
         /// <inheritdoc />
-        public virtual async Task<T> SaveItemToDatabase(T item)
+        public virtual async Task<T> CreateNewItem(T item)
         {
             await Collection.InsertOneAsync(item);
+
+            return item;
+        }
+
+        /// <inheritdoc />
+        public virtual async Task<T> CreateOrUpdateExisting(T item)
+        {
+            await Collection.ReplaceOneAsync(e => e.Id == item.Id, item);
 
             return item;
         }

@@ -21,7 +21,7 @@ namespace Cve.Application.Helpers
         /// Deserialize CVEs json and save into Mongo DB
         /// </summary>
         /// <param name="pathToCve">Path to JSON</param>
-        Task DeserializeAndSaveCveJson(string pathToCve);
+        Task DeserializeAndSaveCveJson(string pathToCve, Func<CveMongoModel, Task<CveMongoModel>> createItem);
 
         /// <summary>
         /// Deserialize CWEs xml and save into Mongo DB

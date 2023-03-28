@@ -8,12 +8,11 @@ using Cve.Infrastructure.Extensions;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using System;
-using Microsoft.Extensions.Options;
 using Cve.Application.Helpers;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Cve.Infrastructure.Helpers;
 using Cve.Application.Services;
 using Cve.Infrastructure.Services;
+using Cve.DomainModels.Configuration;
 
 namespace CVESearch
 {
@@ -59,11 +58,15 @@ namespace CVESearch
                 options.WorkerCount = Environment.ProcessorCount * 2;
             });
             
+            builder.Services.Configure<VulnerabilitiesUrls>(builder.Configuration.GetSection("Vulnerabilities"));
+            builder.Services.AddHttpClient();
+
             builder.Services.AddSingleton<ICweMongoService, CweMongoService>();
             builder.Services.AddSingleton<ICveMongoService, CveMongoService>();
             builder.Services.AddSingleton<ICapecMongoService, CapecMongoService>();
             builder.Services.AddSingleton<IVendorMongoService, VendorMongoService>();
             builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
+
 
             var app = builder.Build();
 
@@ -82,6 +85,8 @@ namespace CVESearch
             BackgroundJob.Enqueue<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially());
 
             RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially(), Cron.Never);
+
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadNewAndModifiedCves(), "0 * * * *");
 
             app.MapControllers();
 
