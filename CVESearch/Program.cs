@@ -30,8 +30,6 @@ namespace CVESearch
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            
-
             builder.Services.Configure<KestrelServerOptions>(options =>
             {
                 options.AllowSynchronousIO = true;
@@ -64,6 +62,7 @@ namespace CVESearch
             builder.Services.AddSingleton<ICweMongoService, CweMongoService>();
             builder.Services.AddSingleton<ICveMongoService, CveMongoService>();
             builder.Services.AddSingleton<ICapecMongoService, CapecMongoService>();
+            builder.Services.AddSingleton<IVendorMongoService, VendorMongoService>();
             builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
 
             var app = builder.Build();

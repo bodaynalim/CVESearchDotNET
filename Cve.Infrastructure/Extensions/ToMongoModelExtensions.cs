@@ -50,7 +50,7 @@ namespace Cve.Infrastructure.Extensions
             };
         }
 
-        public static CveMongoModel ToCveMongoModel(this CveItemModel cveItem)
+        public static (CveMongoModel, VulnarableProducts[]) ToCveMongoModel(this CveItemModel cveItem)
         {
             var cpesTwoThree = cveItem.Configurations.Nodes.SelectMany(s => s.Cpe_match)
                                 .Where(c => c.Vulnerable)
@@ -76,7 +76,7 @@ namespace Cve.Infrastructure.Extensions
                     }).ToArray()
                 }).ToArray();
 
-            return new CveMongoModel
+            return (new CveMongoModel
             {
                 Published = DateTime.Parse(cveItem.PublishedDate).ToUniversalTime(),
                 Modified = DateTime.Parse(cveItem.LastModifiedDate).ToUniversalTime(),
@@ -140,7 +140,7 @@ namespace Cve.Infrastructure.Extensions
                 Summary = cveItem.Cve.Description.Description_data.Select(s => s.Value).JoinToString(" "),
                 VulnerableConfigurations = cpesTwoThree,
                 Products = vendorsAndProducts
-            };
+            }, vendorsAndProducts);
         }
     } 
 }

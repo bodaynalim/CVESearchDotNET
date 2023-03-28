@@ -18,13 +18,15 @@ namespace Cve.Infrastructure.Helpers
         private readonly ICveMongoService _cveMongoService;
         private readonly ICweMongoService _cweMongoService;
         private readonly ICapecMongoService _capecMongoService;
+        private readonly IVendorMongoService _vendorMongoService;
 
-        public VulnerabilitiesJsonHelper(ICveMongoService cveMongoService, 
-            ICweMongoService cweMongoService, ICapecMongoService capecMongoService)
+        public VulnerabilitiesJsonHelper(ICveMongoService cveMongoService,
+            ICweMongoService cweMongoService, ICapecMongoService capecMongoService, IVendorMongoService vendorMongoService)
         {
             _cveMongoService = cveMongoService;
             _cweMongoService = cweMongoService;
             _capecMongoService = capecMongoService;
+            _vendorMongoService = vendorMongoService;
         }
 
         public async Task PopulateDatabaseInitially()
@@ -84,7 +86,12 @@ namespace Cve.Infrastructure.Helpers
 
                     var item = JObject.Load(jsonReader);
 
-                    await _cveMongoService.SaveItemToDatabase(item.ToObject<CveItemModel>().ToCveMongoModel());
+                    var (cve, vendors) = item.ToObject<CveItemModel>().ToCveMongoModel();
+
+                    await _cveMongoService.SaveItemToDatabase(cve);
+
+                    foreach (var vendor in vendors)
+                        await _vendorMongoService.CreateOrUpdateVendor(vendor);
                 }
             }
         }
