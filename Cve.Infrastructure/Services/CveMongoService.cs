@@ -1,10 +1,8 @@
 ﻿using Cve.Application.Services;
 using Cve.DomainModels.MongoModels;
 using MongoDB.Driver;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Cve.Infrastructure.Services
@@ -56,7 +54,7 @@ namespace Cve.Infrastructure.Services
             }
         }
 
-        public async Task<CveMongoModel> CreateNewItemIfNotExist(CveMongoModel item)
+        public override async Task<CveMongoModel> CreateNewItemIfNotExist(CveMongoModel item)
         {
             var any = await Collection.Find(s => s.CveId == item.CveId).FirstOrDefaultAsync();
 

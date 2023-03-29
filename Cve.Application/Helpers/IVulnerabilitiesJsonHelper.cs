@@ -16,24 +16,5 @@ namespace Cve.Application.Helpers
         /// </summary>
         /// <returns></returns>
         Task LoadNewAndModifiedCves();
-
-        /// <summary>
-        /// Deserialize CVEs json and save into Mongo DB
-        /// </summary>
-        /// <param name="pathToCve">Path to JSON</param>
-        Task DeserializeAndSaveCveJson(string pathToCve, Func<CveMongoModel, Task<CveMongoModel>> createItem);
-
-        /// <summary>
-        /// Deserialize CWEs xml and save into Mongo DB
-        /// </summary>
-        /// <param name="pathToXml">Path to Xml</param>
-        Task DeserializeAndSaveCweXml(string pathToXml);
-
-        /// <summary>
-        /// Deserialize CAPECs xml and save into Mongo DB
-        /// </summary>
-        /// <param name="pathToXml"></param>
-        /// <returns></returns>
-        Task DeserializeAndSaveCapecXml(string pathToXml);
     }
 }

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Cve.Infrastructure.Services
 {
-    public class BaseMongoService<T> : IBaseMongoService<T>
+    public abstract class BaseMongoService<T> : IBaseMongoService<T>
         where T: BaseMongoModel
     {
         /// <summary>
@@ -43,16 +43,15 @@ namespace Cve.Infrastructure.Services
         }
 
         /// <inheritdoc />
-        public virtual async Task<T> CreateOrUpdateExisting(T item)
-        {
-            await Collection.ReplaceOneAsync(e => e.Id == item.Id, item);
+        public abstract Task<T> CreateOrUpdateExisting(T item);
 
-            return item;
-        }
-
+        /// <inheritdoc />
         public virtual async Task<bool> ContainsAnyItems()
         {
             return await Collection.CountDocumentsAsync(FilterDefinition<T>.Empty) > 0;
         }
+
+        /// <inheritdoc />
+        public abstract Task<T> CreateNewItemIfNotExist(T item);
     }
 }

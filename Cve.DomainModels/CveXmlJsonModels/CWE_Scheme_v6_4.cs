@@ -2559,7 +2559,6 @@ namespace Cve.DomainModels.CveXmlJsonModels
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://cwe.mitre.org/cwe-6")]
     public class ApplicablePlatformsTypeOperating_System
     {
-
         private OperatingSystemNameEnumeration nameField;
 
         private bool nameFieldSpecified;

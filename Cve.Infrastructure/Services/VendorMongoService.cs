@@ -42,7 +42,32 @@ namespace Cve.Infrastructure.Services
 
                 return result.IsAcknowledged ? vendor : null;
             }
+        }
 
+        public override async Task<VendorProductsMongoModel> CreateOrUpdateExisting(VendorProductsMongoModel item)
+        {
+            var any = await Collection.Find(s => s.Vendor == item.Vendor).FirstOrDefaultAsync();
+
+            if (any == null)
+                return await CreateNewItem(item);
+            else
+            {
+                var result = await Collection.DeleteOneAsync(e => e.Vendor == item.Vendor);
+
+                return result.IsAcknowledged && result.DeletedCount > 0 ? await CreateNewItem(item) : any;
+            }
+        }
+
+        public override async Task<VendorProductsMongoModel> CreateNewItemIfNotExist(VendorProductsMongoModel item)
+        {
+            var any = await Collection.Find(s => s.Vendor == item.Vendor).FirstOrDefaultAsync();
+
+            if (any != null)
+                return any;
+
+            await Collection.InsertOneAsync(item);
+
+            return item;
         }
     }
 }

@@ -24,5 +24,12 @@ namespace Cve.Application.Services
         /// </summary>
         /// <returns></returns>
         Task<bool> ContainsAnyItems();
+
+        /// <summary>
+        /// Create new item if not exist
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        Task<T> CreateNewItemIfNotExist(T item);
     }
 }

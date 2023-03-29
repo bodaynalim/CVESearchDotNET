@@ -1,10 +1,6 @@
 ﻿using Cve.Application.Services;
 using Cve.DomainModels.MongoModels;
 using MongoDB.Driver;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Cve.Infrastructure.Services
@@ -13,8 +9,34 @@ namespace Cve.Infrastructure.Services
     {
         public CweMongoService(IMongoDatabase db) : base(db, "Cwes")
         {
-            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Ascending(c => c.CweId)));
+            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Ascending(c => c.CweId), new CreateIndexOptions { Unique = true}));
             Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Descending(c => c.RelatedCwes)));
+        }
+
+        public override async Task<CweMongoModel> CreateOrUpdateExisting(CweMongoModel item)
+        {
+            var any = await Collection.Find(s => s.CweId == item.CweId).FirstOrDefaultAsync();
+
+            if (any == null)
+                return await CreateNewItem(item);
+            else
+            {
+                var result = await Collection.DeleteOneAsync(e => e.CweId == item.CweId);
+
+                return result.IsAcknowledged && result.DeletedCount > 0 ? await CreateNewItem(item) : any;
+            }
+        }
+
+        public override async Task<CweMongoModel> CreateNewItemIfNotExist(CweMongoModel item)
+        {
+            var any = await Collection.Find(s => s.CweId == item.CweId).FirstOrDefaultAsync();
+
+            if (any != null)
+                return any;
+
+            await Collection.InsertOneAsync(item);
+
+            return item;
         }
     }
 }

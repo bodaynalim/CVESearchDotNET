@@ -1,5 +1,4 @@
 ﻿using Cve.DomainModels.CveXmlJsonModels;
-using System.Collections.Generic;
 
 namespace Cve.DomainModels.MongoModels
 {
