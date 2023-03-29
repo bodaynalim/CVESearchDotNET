@@ -4,6 +4,7 @@ using Cve.DomainModels.Configuration;
 using Cve.DomainModels.CveXmlJsonModels;
 using Cve.DomainModels.MongoModels;
 using Cve.Infrastructure.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -26,11 +27,12 @@ namespace Cve.Infrastructure.Helpers
         private readonly IVendorMongoService _vendorMongoService;
         private readonly VulnerabilitiesUrls _vulnerabilitiesUrls;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<VulnerabilitiesJsonHelper> _logger;
 
         public VulnerabilitiesJsonHelper(ICveMongoService cveMongoService,
             ICweMongoService cweMongoService, ICapecMongoService capecMongoService,
             IVendorMongoService vendorMongoService, IOptions<VulnerabilitiesUrls> cveUrls,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory, ILogger<VulnerabilitiesJsonHelper> logger)
         {
             _cveMongoService = cveMongoService;
             _cweMongoService = cweMongoService;
@@ -38,6 +40,7 @@ namespace Cve.Infrastructure.Helpers
             _vendorMongoService = vendorMongoService;
             _vulnerabilitiesUrls = cveUrls.Value;
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
         public async Task PopulateDatabaseInitially()
@@ -54,7 +57,9 @@ namespace Cve.Infrastructure.Helpers
                 for (int i = 0; i <= countOfYears; i++)
                 {
                     var neededYear = _vulnerabilitiesUrls.StartTracking + i;
-                    await LoadCertainYearCves(neededYear, (c) => _cveMongoService.CreateNewItem(c));
+                    await LoadCertainUrlCves(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, neededYear),
+                       string.Format(_vulnerabilitiesUrls.CveJsonNameTemplate, neededYear),
+                       (c) => _cveMongoService.CreateNewItem(c));
                 }
             }
 
@@ -66,38 +71,17 @@ namespace Cve.Infrastructure.Helpers
         {
             if (BackgroundJobsModule.CheckJobIsRunningOrScheduledByName(nameof(PopulateDatabaseInitially)))
                 return;
+                           
+            var currentYear = DateTime.UtcNow.Year;
+            await LoadCertainUrlCves(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, currentYear), 
+                string.Format(_vulnerabilitiesUrls.CveJsonNameTemplate, currentYear), 
+                (c) => _cveMongoService.CreateNewItemIfNotExist(c));
 
-            var tempPath = Path.GetTempPath();
-            var tempRandomRecentFile = Path.Combine(tempPath, $"{Path.GetRandomFileName()}.zip");
-            var tempRandomRecentDir = Path.Combine(tempPath, Path.GetRandomFileName());
-            var tempRandomModifiedFile = Path.Combine(tempPath, $"{Path.GetRandomFileName()}.zip");
-            var tempRandomModifiedDir = Path.Combine(tempPath, Path.GetRandomFileName());
+            await LoadCertainUrlCves(_vulnerabilitiesUrls.CveRecentUrl, _vulnerabilitiesUrls.CveRecentJsonName,
+                (c) => _cveMongoService.CreateNewItemIfNotExist(c));
 
-            try
-            {
-                var currentYear = DateTime.UtcNow.Year;
-                await LoadCertainYearCves(currentYear, (c) => _cveMongoService.CreateNewItemIfNotExist(c));
-
-                using (var client = _httpClientFactory.CreateClient())
-                {
-                    await DownloadAndExtract(client, tempRandomRecentFile, tempRandomRecentDir, _vulnerabilitiesUrls.CveRecentUrl);
-
-                    await DeserializeAndSaveCveJson($"{tempRandomRecentDir}\\{_vulnerabilitiesUrls.CveRecentJsonName}",
-                        (c) => _cveMongoService.CreateNewItemIfNotExist(c));
-
-                    await DownloadAndExtract(client, tempRandomModifiedFile, tempRandomModifiedDir, _vulnerabilitiesUrls.CveModifiedUrl);
-
-                    await DeserializeAndSaveCveJson($"{tempRandomModifiedDir}\\{_vulnerabilitiesUrls.CveModifiedJsonName}",
-                        (c) => _cveMongoService.CreateOrUpdateExisting(c));
-                }                
-            }
-            finally
-            {
-                Directory.Delete(tempRandomRecentDir, true);
-                Directory.Delete(tempRandomModifiedDir, true);
-                File.Delete(tempRandomRecentFile);
-                File.Delete(tempRandomModifiedDir);
-            }
+            await LoadCertainUrlCves(_vulnerabilitiesUrls.CveModifiedUrl, _vulnerabilitiesUrls.CveModifiedJsonName,
+                (c) => _cveMongoService.CreateNewItemIfNotExist(c));
         }        
 
         public async Task DeserializeAndSaveCveJson(string pathToJson, Func<CveMongoModel, Task<CveMongoModel>> createItem)
@@ -168,27 +152,27 @@ namespace Cve.Infrastructure.Helpers
             }
         }
 
-        private async Task LoadCertainYearCves(int year, Func<CveMongoModel, Task<CveMongoModel>> saveToMongo)
+        private async Task LoadCertainUrlCves(string url, string jsonName, Func<CveMongoModel, Task<CveMongoModel>> saveToMongo)
         {
             var tempPath = Path.GetTempPath();
             var tempRandomFile = Path.Combine(tempPath, $"{Path.GetRandomFileName()}.zip");
             var tempRandomDir = Path.Combine(tempPath, Path.GetRandomFileName());
-            
+
 
             try
             {
                 using (var client = _httpClientFactory.CreateClient())
                 {
                     await DownloadAndExtract(client, tempRandomFile, tempRandomDir,
-                        string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, year));
+                        url);
 
-                    await DeserializeAndSaveCveJson($"{tempRandomDir}\\{string.Format(_vulnerabilitiesUrls.CveJsonNameTemplate, year)}",
+                    await DeserializeAndSaveCveJson($"{tempRandomDir}\\{jsonName}",
                         saveToMongo);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                throw e;
+                _logger.LogError(e, $"Failed to load {url} {jsonName}: {e.Message}");
             }
             finally
             {
