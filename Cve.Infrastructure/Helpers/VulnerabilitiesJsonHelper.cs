@@ -45,45 +45,28 @@ namespace Cve.Infrastructure.Helpers
             if (await _cveMongoService.ContainsAnyItems())
                 return;
 
-            var tempPath = Path.GetTempPath();
-            var firstJson = Path.Combine(tempPath, Path.GetRandomFileName());
-            var secondJson = Path.Combine(tempPath, Path.GetRandomFileName());
-            var thirdJson = Path.Combine(tempPath, Path.GetRandomFileName());
-            var fourthJson = Path.Combine(tempPath, Path.GetRandomFileName());
+            var currentYear = DateTime.UtcNow.Year;
 
-            try
-            { 
-                ZipFile.ExtractToDirectory("Data\\nvdcve-1.1-2020.json.zip", firstJson, true);
-                ZipFile.ExtractToDirectory("Data\\nvdcve-1.1-2021.json.zip", secondJson, true);
-                ZipFile.ExtractToDirectory("Data\\nvdcve-1.1-2022.json.zip", thirdJson, true);
-                ZipFile.ExtractToDirectory("Data\\nvdcve-1.1-2023.json.zip", fourthJson, true);
+            var countOfYears = currentYear - _vulnerabilitiesUrls.StartTracking;
 
-                await DeserializeAndSaveCveJson($"{firstJson}\\nvdcve-1.1-2020.json", 
-                    (c) => _cveMongoService.CreateNewItemIfNotExist(c));
-
-                await DeserializeAndSaveCveJson($"{secondJson}\\nvdcve-1.1-2021.json", 
-                    (c) => _cveMongoService.CreateNewItemIfNotExist(c));
-
-                await DeserializeAndSaveCveJson($"{thirdJson}\\nvdcve-1.1-2022.json",
-                    (c) => _cveMongoService.CreateNewItemIfNotExist(c));
-
-                await DeserializeAndSaveCveJson($"{fourthJson}\\nvdcve-1.1-2023.json", 
-                    (c) => _cveMongoService.CreateNewItemIfNotExist(c));
-
-                await DeserializeAndSaveCweXml(@"Data\cwec_v4.4.xml");
-                await DeserializeAndSaveCapecXml(@"Data\capec_v3.7.xml");
-            }
-            finally
+            if (countOfYears > 0)
             {
-                File.Delete($"{firstJson}\\nvdcve-1.1-2020.json");
-                File.Delete($"{secondJson}\\nvdcve-1.1-2021.json");
-                File.Delete($"{thirdJson}\\nvdcve-1.1-2022.json");
-                File.Delete($"{fourthJson}\\nvdcve-1.1-2023.json");
+                for (int i = 0; i <= countOfYears; i++)
+                {
+                    var neededYear = _vulnerabilitiesUrls.StartTracking + i;
+                    await LoadCertainYearCves(neededYear, (c) => _cveMongoService.CreateNewItem(c));
+                }
             }
+
+            await DeserializeAndSaveCweXml(@"Data\cwec_v4.4.xml");
+            await DeserializeAndSaveCapecXml(@"Data\capec_v3.7.xml");
         }
 
         public async Task LoadNewAndModifiedCves()
         {
+            if (BackgroundJobsModule.CheckJobIsRunningOrScheduledByName(nameof(PopulateDatabaseInitially)))
+                return;
+
             var tempPath = Path.GetTempPath();
             var tempRandomRecentFile = Path.Combine(tempPath, $"{Path.GetRandomFileName()}.zip");
             var tempRandomRecentDir = Path.Combine(tempPath, Path.GetRandomFileName());
@@ -92,7 +75,8 @@ namespace Cve.Infrastructure.Helpers
 
             try
             {
-                await LoadCurrentYearCves();
+                var currentYear = DateTime.UtcNow.Year;
+                await LoadCertainYearCves(currentYear, (c) => _cveMongoService.CreateNewItemIfNotExist(c));
 
                 using (var client = _httpClientFactory.CreateClient())
                 {
@@ -156,6 +140,8 @@ namespace Cve.Infrastructure.Helpers
                 (item) => _capecMongoService.CreateNewItem(item.ToCapecMongoModel()));
         }
 
+        #region Private Helpers
+
         private async Task DeserializeAndSaveXml<T>(string pathToXml, string rootAttributeName, string nameSpace, Func<T, Task> saveToMongo)
         {
             using var reader = XmlReader.Create(pathToXml, new XmlReaderSettings
@@ -182,23 +168,27 @@ namespace Cve.Infrastructure.Helpers
             }
         }
 
-        private async Task LoadCurrentYearCves()
+        private async Task LoadCertainYearCves(int year, Func<CveMongoModel, Task<CveMongoModel>> saveToMongo)
         {
             var tempPath = Path.GetTempPath();
             var tempRandomFile = Path.Combine(tempPath, $"{Path.GetRandomFileName()}.zip");
             var tempRandomDir = Path.Combine(tempPath, Path.GetRandomFileName());
-            var currentYear = DateTime.UtcNow.Year;
+            
 
             try
             {
                 using (var client = _httpClientFactory.CreateClient())
                 {
                     await DownloadAndExtract(client, tempRandomFile, tempRandomDir,
-                        string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, currentYear));
+                        string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, year));
 
-                    await DeserializeAndSaveCveJson($"{tempRandomDir}\\{string.Format(_vulnerabilitiesUrls.CveJsonNameTemplate, currentYear)}",
-                        (c) => _cveMongoService.CreateNewItemIfNotExist(c));
+                    await DeserializeAndSaveCveJson($"{tempRandomDir}\\{string.Format(_vulnerabilitiesUrls.CveJsonNameTemplate, year)}",
+                        saveToMongo);
                 }
+            }
+            catch(Exception e)
+            {
+                throw e;
             }
             finally
             {
@@ -218,5 +208,7 @@ namespace Cve.Infrastructure.Helpers
 
             ZipFile.ExtractToDirectory(tempRandomFile, tempRandomDir, true);
         }
-    } 
+
+        #endregion
+    }
 }
