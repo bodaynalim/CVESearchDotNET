@@ -1,8 +1,8 @@
-﻿using Cve.DomainModels.MongoModels;
-using System.Threading.Tasks;
-
-namespace Cve.Application.Helpers
+﻿namespace Cve.Application.Helpers
 {
+    /// <summary>
+    /// Helper for update CVEs, CWEs, CAPECs in db
+    /// </summary>
     public interface IVulnerabilitiesJsonHelper
     {
         /// <summary>

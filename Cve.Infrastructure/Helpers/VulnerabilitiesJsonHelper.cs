@@ -1,5 +1,4 @@
-﻿using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
-using Cve.Application.Helpers;
+﻿using Cve.Application.Helpers;
 using Cve.Application.Services;
 using Cve.DomainModels.Configuration;
 using Cve.DomainModels.CveXmlJsonModels;
@@ -14,7 +13,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
@@ -50,6 +48,7 @@ namespace Cve.Infrastructure.Helpers
             if (await _cveMongoService.ContainsAnyItems())
                 return;
 
+            // Download and deserialize CWEs and CAPECs
             await DeserializeAndSaveCweXml(_vulnerabilitiesUrls.CweUrl);
             await DeserializeAndSaveCapecXml(_vulnerabilitiesUrls.CapecUrl);
 
@@ -59,11 +58,11 @@ namespace Cve.Infrastructure.Helpers
 
             if (countOfYears > 0)
             {
+                // Download and deserialize CVEs
                 for (int i = 0; i <= countOfYears; i++)
                 {
                     var neededYear = _vulnerabilitiesUrls.StartTracking + i;
                     await LoadCertainUrlCves(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, neededYear),
-                       string.Format(_vulnerabilitiesUrls.CveJsonNameTemplate, neededYear),
                        (c) => _cveMongoService.CreateNewItem(c));
                 }
             }            
@@ -74,18 +73,21 @@ namespace Cve.Infrastructure.Helpers
             if (BackgroundJobsModule.CheckJobIsRunningOrScheduledByName(nameof(PopulateDatabaseInitially)))
                 return;
 
+            // Download and deserialize CWEs and CAPECs
             await DeserializeAndSaveCweXml(_vulnerabilitiesUrls.CweUrl);
-            await DeserializeAndSaveCapecXml(_vulnerabilitiesUrls.CapecLatestUrl);
+            await DeserializeAndSaveCapecXml(_vulnerabilitiesUrls.CapecUrl);
 
+            // Download and deserialize current year CVEs
             var currentYear = DateTime.UtcNow.Year;
-            await LoadCertainUrlCves(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, currentYear), 
-                string.Format(_vulnerabilitiesUrls.CveJsonNameTemplate, currentYear), 
+            await LoadCertainUrlCves(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, currentYear),
                 (c) => _cveMongoService.CreateNewItemIfNotExist(c));
 
-            await LoadCertainUrlCves(_vulnerabilitiesUrls.CveRecentUrl, _vulnerabilitiesUrls.CveRecentJsonName,
+            // Download and deserialize recent CVEs
+            await LoadCertainUrlCves(_vulnerabilitiesUrls.CveRecentUrl, 
                 (c) => _cveMongoService.CreateNewItemIfNotExist(c));
 
-            await LoadCertainUrlCves(_vulnerabilitiesUrls.CveModifiedUrl, _vulnerabilitiesUrls.CveModifiedJsonName,
+            // Download and deserialize modified CVEs
+            await LoadCertainUrlCves(_vulnerabilitiesUrls.CveModifiedUrl,
                 (c) => _cveMongoService.CreateNewItemIfNotExist(c));
         }
 
@@ -113,6 +115,7 @@ namespace Cve.Infrastructure.Helpers
 
                     await createItem.Invoke(cve);
 
+                    // Create vendor entry in Db
                     foreach (var vendor in vendors)
                         await _vendorMongoService.CreateOrUpdateVendor(vendor);
                 }
@@ -198,26 +201,27 @@ namespace Cve.Infrastructure.Helpers
             }
         }
 
-        private async Task LoadCertainUrlCves(string url, string jsonName, Func<CveMongoModel, Task<CveMongoModel>> saveToMongo)
+        private async Task LoadCertainUrlCves(string url, Func<CveMongoModel, Task<CveMongoModel>> saveToMongo)
         {
             var tempPath = Path.GetTempPath();
             var tempRandomFile = Path.Combine(tempPath, $"{Path.GetRandomFileName()}.zip");
             var tempRandomDir = Path.Combine(tempPath, Path.GetRandomFileName());
+            string jsonFile = string.Empty;
 
             try
             {
                 using (var client = _httpClientFactory.CreateClient())
                 {
-                    await DownloadAndExtract(client, tempRandomFile, tempRandomDir,
+                    jsonFile = await DownloadAndExtract(client, tempRandomFile, tempRandomDir,
                         url);
 
-                    await DeserializeAndSaveCveJson($"{tempRandomDir}\\{jsonName}",
+                    await DeserializeAndSaveCveJson(jsonFile,
                         saveToMongo);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, $"Failed to load {url} {jsonName}: {e.Message}");
+                _logger.LogError(e, $"Failed to load {url} {jsonFile}: {e.Message}");
             }
             finally
             {
