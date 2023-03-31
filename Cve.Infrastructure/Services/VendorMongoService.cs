@@ -1,6 +1,8 @@
 ﻿using Cve.Application.Services;
 using Cve.DomainModels.MongoModels;
+using Cve.DomainModels.MongoModels.Cve;
 using MongoDB.Driver;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -68,6 +70,16 @@ namespace Cve.Infrastructure.Services
             await Collection.InsertOneAsync(item);
 
             return item;
+        }
+
+        public override async Task<VendorProductsMongoModel> Get(string id)
+        {
+            return await Collection.Find(s => s.Vendor == id).FirstOrDefaultAsync();
+        }
+
+        public IEnumerable<string> GetAllVendors()
+        {
+            return Collection.AsQueryable().Select(s => s.Vendor);
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using Cve.Application.Services;
-using Cve.DomainModels.MongoModels;
+using Cve.DomainModels.MongoModels.Capec;
 using MongoDB.Driver;
 using System.Threading.Tasks;
 
@@ -38,6 +38,11 @@ namespace Cve.Infrastructure.Services
             await Collection.InsertOneAsync(item);
 
             return item;
+        }
+
+        public override async Task<CapecMongoModel> Get(string id)
+        {
+            return await Collection.Find(s => s.CapecId == id).FirstOrDefaultAsync();
         }
     }
 }

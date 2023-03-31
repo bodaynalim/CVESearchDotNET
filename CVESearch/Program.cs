@@ -13,6 +13,7 @@ using Cve.Infrastructure.Helpers;
 using Cve.Application.Services;
 using Cve.Infrastructure.Services;
 using Cve.DomainModels.Configuration;
+using Cve.Infrastructure.AutoMapper;
 
 namespace CVESearch
 {
@@ -66,6 +67,7 @@ namespace CVESearch
             builder.Services.AddSingleton<ICapecMongoService, CapecMongoService>();
             builder.Services.AddSingleton<IVendorMongoService, VendorMongoService>();
             builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
+            builder.Services.AddAutoMapper(typeof(VulnerabilitiesProfile));
 
 
             var app = builder.Build();

@@ -1,4 +1,5 @@
 ﻿using Cve.DomainModels.MongoModels;
+using Cve.DomainModels.MongoModels.Cve;
 
 namespace Cve.Application.Services
 {
@@ -10,5 +11,11 @@ namespace Cve.Application.Services
         /// <param name="vendor">Vendor model</param>
         /// <returns></returns>
         Task<VendorProductsMongoModel> CreateOrUpdateVendor(VulnarableProducts vendor);
+
+        /// <summary>
+        /// Get all vendors
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<string> GetAllVendors();
     }
 }

@@ -1,8 +1,10 @@
 ﻿using Cve.DomainModels.CveXmlJsonModels;
-using Cve.DomainModels.MongoModels;
+using Cve.DomainModels.MongoModels.Capec;
+using Cve.DomainModels.MongoModels.Cve;
+using Cve.DomainModels.MongoModels.Cwe;
 using System;
 using System.Linq;
-using Reference = Cve.DomainModels.MongoModels.Reference;
+using Reference = Cve.DomainModels.MongoModels.Cve.Reference;
 
 namespace Cve.Infrastructure.Extensions
 {

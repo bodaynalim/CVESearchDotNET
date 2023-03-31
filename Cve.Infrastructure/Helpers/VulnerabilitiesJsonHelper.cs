@@ -2,7 +2,7 @@
 using Cve.Application.Services;
 using Cve.DomainModels.Configuration;
 using Cve.DomainModels.CveXmlJsonModels;
-using Cve.DomainModels.MongoModels;
+using Cve.DomainModels.MongoModels.Cve;
 using Cve.Infrastructure.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

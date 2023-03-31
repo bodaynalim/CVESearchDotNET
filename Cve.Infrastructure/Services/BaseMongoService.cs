@@ -1,10 +1,6 @@
 ﻿using Cve.Application.Services;
 using Cve.DomainModels.MongoModels;
 using MongoDB.Driver;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Cve.Infrastructure.Services
@@ -53,5 +49,8 @@ namespace Cve.Infrastructure.Services
 
         /// <inheritdoc />
         public abstract Task<T> CreateNewItemIfNotExist(T item);
+
+        /// <inheritdoc />
+        public abstract Task<T> Get(string id);
     }
 }

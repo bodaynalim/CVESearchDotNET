@@ -1,4 +1,4 @@
-﻿using Cve.DomainModels.MongoModels;
+﻿using Cve.DomainModels.MongoModels.Cve;
 
 namespace Cve.Application.Services
 {

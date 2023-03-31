@@ -6,6 +6,13 @@ namespace Cve.Application.Services
         where T : BaseMongoModel
     {
         /// <summary>
+        /// Get item by ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task<T> Get(string id);
+
+        /// <summary>
         /// Create new item in database
         /// </summary>
         /// <param name="item"></param>

@@ -1,13 +1,16 @@
 ﻿using Cve.DomainModels.CveXmlJsonModels;
 
-namespace Cve.DomainModels.MongoModels
+namespace Cve.DomainModels.MongoModels.Cwe
 {
+    /// <summary>
+    /// CWE mongo model
+    /// </summary>
     public class CweMongoModel : BaseMongoModel
     {
         public string CweId { get; set; }
 
         public string Name { get; set; }
-        
+
         public string Description { get; set; }
 
         public StatusEnumeration Status { get; set; }

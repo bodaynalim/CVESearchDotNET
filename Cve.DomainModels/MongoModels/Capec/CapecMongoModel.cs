@@ -1,4 +1,4 @@
-﻿namespace Cve.DomainModels.MongoModels
+﻿namespace Cve.DomainModels.MongoModels.Capec
 {
     public class CapecMongoModel : BaseMongoModel
     {
@@ -23,27 +23,5 @@
         public string LikelyhoodAttack { get; set; }
 
         public ExecutionFlowTypeAttack[] ExecutionFlowTypeAttacks { get; set; }
-    }
-
-    public class Taxonomy
-    {
-        public string Name { get; set; }
-
-        public string EntryId { get; set; }
-
-        public string EntryName { get; set; }
-
-        public string Url { get; set; }
-    }
-
-    public class ExecutionFlowTypeAttack
-    {
-        public string Step { get; set; }
-
-        public string Phase { get; set; }
-
-        public string DescriptionField { get; set; } 
-
-        public string[] Techniques;
     }
 }
