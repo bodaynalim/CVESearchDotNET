@@ -6,16 +6,20 @@ using System.Threading.Tasks;
 
 namespace Cve.Net.Search.Infrastructure.Services.Cve
 {
-    public class CveModifiedMongoService : BaseCveMongoService, ICveModifiedMongoService
+    public class CveModifiedMongoService : BaseMongoService<CveModifiedMongoModel>, ICveModifiedMongoService
     {
         public CveModifiedMongoService(IMongoDatabase db) : base(db, "CvesModified")
         {
-            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>
+            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveModifiedMongoModel>(Builders<CveModifiedMongoModel>
                 .IndexKeys
-                .Ascending(c => c.CveId)));           
+                .Ascending(c => c.CveId)));
+
+           Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveModifiedMongoModel>(Builders<CveModifiedMongoModel>
+               .IndexKeys
+               .Descending(c => c.Modified)));
         }
 
-        public override async Task<CveMongoModel> CreateOrUpdateExisting(CveMongoModel item)
+        public override async Task<CveModifiedMongoModel> CreateOrUpdateExisting(CveModifiedMongoModel item)
         {
             var any = await Collection.Find(s => s.CveId == item.CveId).FirstOrDefaultAsync();
 
@@ -29,6 +33,28 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
 
                 return result.IsAcknowledged && result.MatchedCount > 0 ? item : any;
             }
+        }
+
+        public override async Task<CveModifiedMongoModel> CreateNewItemIfNotExist(CveModifiedMongoModel item)
+        {
+            var any = await Collection.Find(s => s.CveId == item.CveId).FirstOrDefaultAsync();
+
+            if (any != null)
+                return any;
+
+            await Collection.InsertOneAsync(item);
+
+            return item;
+        }
+
+        public override async Task<CveModifiedMongoModel> Get(string id)
+        {
+            return await Collection.Find(s => s.CveId == id).FirstOrDefaultAsync();
+        }
+
+        public async Task LogChanges(CveMongoModel old, CveMongoModel newItem)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

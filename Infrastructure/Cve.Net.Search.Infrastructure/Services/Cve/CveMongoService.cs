@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Cve.Net.Search.Infrastructure.Services.Cve
 {
-    public class CveMongoService : BaseCveMongoService, ICveMongoService
+    public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
     {
         private readonly ICveModifiedMongoService _cveModifiedMongoService;
 
@@ -18,6 +18,10 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
             Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>
                 .IndexKeys
                 .Ascending(c => c.CveId), new CreateIndexOptions { Unique = true }));
+            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>.IndexKeys.Descending(c => c.Published)));
+            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>.IndexKeys.Descending(c => c.Modified)));
+            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>.IndexKeys.Ascending(c => c.Products)));
+            Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>.IndexKeys.Ascending(c => c.VulnerableConfigurations)));
             _cveModifiedMongoService = cveModifiedMongoService;
         }
 
@@ -32,10 +36,7 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
                 item.Id = any.Id;
 
                 if (item.Modified > any.Modified)
-                {
-                    any.Id = null;
-                    await _cveModifiedMongoService.CreateNewItem(any);
-                }
+                    await _cveModifiedMongoService.LogChanges(any, item);
 
                 var result = await Collection.ReplaceOneAsync(e => e.CveId == item.CveId, item);
 
@@ -73,6 +74,23 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
             var result = Collection.Find(filter).Skip((page - 1) * count).Limit(count).Sort(sort);
 
             return await result.ToListAsync();
+        }
+
+        public override async Task<CveMongoModel> CreateNewItemIfNotExist(CveMongoModel item)
+        {
+            var any = await Collection.Find(s => s.CveId == item.CveId).FirstOrDefaultAsync();
+
+            if (any != null)
+                return any;
+
+            await Collection.InsertOneAsync(item);
+
+            return item;
+        }
+
+        public override async Task<CveMongoModel> Get(string id)
+        {
+            return await Collection.Find(s => s.CveId == id).FirstOrDefaultAsync();
         }
 
         public async Task<CveMongoModel> GetLastOnePublished(string vendor, string product)
