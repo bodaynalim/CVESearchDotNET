@@ -16,6 +16,7 @@ using Cve.Infrastructure.AutoMapper;
 using Microsoft.OpenApi.Models;
 using System.IO;
 using Cve.Net.Search.Infrastructure.Configuration;
+using Audit.Core;
 
 namespace Cve.Net.Search.Web
 {
@@ -79,6 +80,11 @@ namespace Cve.Net.Search.Web
             builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
             builder.Services.AddAutoMapper(typeof(VulnerabilitiesProfile));
 
+            Audit.Core.Configuration.Setup()
+                .UseMongoDB(config => config
+                    .ConnectionString(builder.Configuration.GetConnectionString("Mongo"))
+                    .Database("Audit")
+                    .Collection("Event"));
 
             var app = builder.Build();
 

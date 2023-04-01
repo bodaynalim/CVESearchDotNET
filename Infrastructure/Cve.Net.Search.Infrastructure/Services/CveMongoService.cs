@@ -58,9 +58,11 @@ namespace Cve.Infrastructure.Services
                 return await CreateNewItem(item);
             else
             {
-                var result = await Collection.DeleteOneAsync(e => e.CveId == item.CveId);
+                item.Id = any.Id;
 
-                return result.IsAcknowledged && result.DeletedCount > 0 ? await CreateNewItem(item) : any;
+                var result = await Collection.ReplaceOneAsync(e => e.CveId == item.CveId, item);
+
+                return result.IsAcknowledged && result.MatchedCount > 0 ? item : any;
             }
         }
 

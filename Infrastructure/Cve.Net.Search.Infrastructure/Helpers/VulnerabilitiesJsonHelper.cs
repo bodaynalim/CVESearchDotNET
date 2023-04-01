@@ -80,15 +80,15 @@ namespace Cve.Infrastructure.Helpers
             // Download and deserialize current year CVEs
             var currentYear = DateTime.UtcNow.Year;
             await LoadCertainUrlCves(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, currentYear),
-                (c) => _cveMongoService.CreateNewItemIfNotExist(c));
+                (c) => _cveMongoService.CreateOrUpdateExisting(c));
 
             // Download and deserialize recent CVEs
             await LoadCertainUrlCves(_vulnerabilitiesUrls.CveRecentUrl, 
-                (c) => _cveMongoService.CreateNewItemIfNotExist(c));
+                (c) => _cveMongoService.CreateOrUpdateExisting(c));
 
             // Download and deserialize modified CVEs
             await LoadCertainUrlCves(_vulnerabilitiesUrls.CveModifiedUrl,
-                (c) => _cveMongoService.CreateNewItemIfNotExist(c));
+                (c) => _cveMongoService.CreateOrUpdateExisting(c));
         }
 
         #region Private Helpers
