@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using System.Text.Json.Serialization;
 using Cve.Infrastructure.Extensions;
 using Hangfire;
@@ -16,7 +14,8 @@ using Cve.Infrastructure.AutoMapper;
 using Microsoft.OpenApi.Models;
 using System.IO;
 using Cve.Net.Search.Infrastructure.Configuration;
-using Audit.Core;
+using Cve.Net.Search.Application.Services.Cve;
+using Cve.Net.Search.Infrastructure.Services.Cve;
 
 namespace Cve.Net.Search.Web
 {
@@ -75,16 +74,11 @@ namespace Cve.Net.Search.Web
 
             builder.Services.AddSingleton<ICweMongoService, CweMongoService>();
             builder.Services.AddSingleton<ICveMongoService, CveMongoService>();
+            builder.Services.AddSingleton<ICveModifiedMongoService, CveModifiedMongoService>();
             builder.Services.AddSingleton<ICapecMongoService, CapecMongoService>();
             builder.Services.AddSingleton<IVendorMongoService, VendorMongoService>();
             builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
             builder.Services.AddAutoMapper(typeof(VulnerabilitiesProfile));
-
-            Audit.Core.Configuration.Setup()
-                .UseMongoDB(config => config
-                    .ConnectionString(builder.Configuration.GetConnectionString("Mongo"))
-                    .Database("Audit")
-                    .Collection("Event"));
 
             var app = builder.Build();
 

@@ -1,6 +1,7 @@
 ﻿using Cve.Application.Helpers;
 using Cve.Application.Services;
 using Cve.Infrastructure.Extensions;
+using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Infrastructure.Configuration;

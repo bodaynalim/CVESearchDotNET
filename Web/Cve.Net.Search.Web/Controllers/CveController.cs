@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Cve.Application.Services;
+using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

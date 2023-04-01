@@ -1,5 +1,4 @@
 ﻿using Cve.Net.Search.Domain.Common.Cve;
-using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using System;
 
 namespace Cve.Net.Search.Domain.ViewModels

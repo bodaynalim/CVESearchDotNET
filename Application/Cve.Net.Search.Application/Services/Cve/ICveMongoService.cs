@@ -1,6 +1,7 @@
-﻿using Cve.Net.Search.Domain.Database.MongoModels.Cve;
+﻿using Cve.Application.Services;
+using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 
-namespace Cve.Application.Services
+namespace Cve.Net.Search.Application.Services.Cve
 {
     public interface ICveMongoService : IBaseMongoService<CveMongoModel>
     {

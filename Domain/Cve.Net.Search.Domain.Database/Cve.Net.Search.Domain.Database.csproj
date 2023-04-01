@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Cve.Net.Search.Domain.Common\Cve.Net.Search.Domain.Common.csproj" />
+    <ProjectReference Include="..\Cve.Net.Search.Domain.Common\Cve.Net.Search.Domain.Common.csproj" />
   </ItemGroup>
 
 </Project>
