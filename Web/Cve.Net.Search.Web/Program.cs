@@ -16,6 +16,10 @@ using System.IO;
 using Cve.Net.Search.Infrastructure.Configuration;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Infrastructure.Services.Cve;
+using Microsoft.Extensions.Configuration;
+using Hangfire.Dashboard;
+using Microsoft.Extensions.Hosting;
+using Cve.Net.Search.Web.Infrastructure.Hangfire;
 
 namespace Cve.Net.Search.Web
 {
@@ -94,7 +98,33 @@ namespace Cve.Net.Search.Web
             app.UseHttpsRedirection();
             app.UseAuthorization();
 
-            app.UseHangfireDashboard("/hangfire");
+            var dashboardUserConfig =
+                app.Configuration.GetSection("HangfireDashboarAuth").Get<HangfireDashboardAuth>();
+
+            var hangfireAuth = new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+            {
+                RequireSsl = false,
+                SslRedirect = false,
+                LoginCaseSensitive = true,
+                Users = new[]
+                {
+                    new BasicAuthAuthorizationUser
+                    {
+                        Login = dashboardUserConfig.UserName,
+                        PasswordClear = dashboardUserConfig.Password
+                    }
+                }
+            });
+
+            var options = new DashboardOptions
+            {
+                Authorization = new []
+                {
+                    hangfireAuth
+                }
+            };
+
+            app.UseHangfireDashboard("/hangfire", options);
 
             BackgroundJob.Enqueue<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially());
 

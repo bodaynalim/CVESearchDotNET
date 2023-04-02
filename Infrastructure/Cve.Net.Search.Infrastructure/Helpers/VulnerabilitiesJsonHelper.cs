@@ -4,6 +4,7 @@ using Cve.Infrastructure.Extensions;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
+using Cve.Net.Search.Infrastructure.Attributes.Jobs;
 using Cve.Net.Search.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -44,6 +45,7 @@ namespace Cve.Infrastructure.Helpers
             _logger = logger;
         }
 
+        [Mutex("PopulateDatabaseInitially")]
         public async Task PopulateDatabaseInitially()
         {
             if (await _cveMongoService.ContainsAnyItems())
@@ -69,6 +71,7 @@ namespace Cve.Infrastructure.Helpers
             }            
         }
 
+        [Mutex("LoadNewAndModifiedCves")]
         public async Task LoadNewAndModifiedCves()
         {
             if (BackgroundJobsModule.CheckJobIsRunningOrScheduledByName(nameof(PopulateDatabaseInitially)))
