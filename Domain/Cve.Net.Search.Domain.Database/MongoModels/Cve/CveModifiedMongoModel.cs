@@ -20,8 +20,8 @@ namespace Cve.Net.Search.Domain.Database.MongoModels.Cve
 
         public string PropertyDescription { get; set; }
 
-        public object OldValue { get; set; }
+        public string OldValue { get; set; }
 
-        public object NewValue { get; set; }
+        public string NewValue { get; set; }
     }
 }

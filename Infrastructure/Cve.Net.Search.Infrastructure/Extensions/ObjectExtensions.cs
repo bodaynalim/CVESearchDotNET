@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 
-namespace Cve.Net.Search.Infrastructure.Extensions
+namespace Cve.Net.Search.Domain.Database.Extensions
 {
-    public class ObjectExtensions
+    public static class ObjectExtensions
     {
         /// <summary>
         /// Check if objects are equals

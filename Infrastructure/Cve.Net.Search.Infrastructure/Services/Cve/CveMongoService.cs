@@ -1,7 +1,6 @@
 ﻿using Cve.Infrastructure.Services;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
-using Cve.Net.Search.Infrastructure.Extensions;
 using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Linq;

@@ -37,6 +37,8 @@ namespace Cve.Net.Search.Web
                 options.IncludeXmlComments(
                     Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Web.xml"));
                 options.IncludeXmlComments(
+                   Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.Common.xml"));                
+                options.IncludeXmlComments(
                     Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.ViewModels.xml")); 
             });
 

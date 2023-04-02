@@ -113,10 +113,10 @@ namespace Cve.Infrastructure.Extensions
                 },
                 Cvss3 = new CvssThree
                 {
-                    Access = new AccessThree
+                    Attack = new AttackThree
                     {                        
                         Complexity = cveItem.Impact?.BaseMetricV3?.CvssV3.AttackComplexity.ToString(),
-                        Vector = cveItem.Impact?.BaseMetricV3?.CvssV3.Version.ToString(),
+                        Vector = cveItem.Impact?.BaseMetricV3?.CvssV3.AttackVector.ToString(),
                         PrivilegesRequired = cveItem.Impact?.BaseMetricV3?.CvssV3.PrivilegesRequired.ToString(),
                         Scope = cveItem.Impact?.BaseMetricV3?.CvssV3.Scope.ToString(),
                         UserInteraction = cveItem.Impact?.BaseMetricV3?.CvssV3.UserInteraction.ToString(),

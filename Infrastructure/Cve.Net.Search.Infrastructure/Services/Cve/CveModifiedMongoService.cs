@@ -1,7 +1,12 @@
-﻿using Cve.Infrastructure.Services;
+﻿using Cve.Infrastructure.Extensions;
+using Cve.Infrastructure.Services;
 using Cve.Net.Search.Application.Services.Cve;
+using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
+using Cve.Net.Search.Domain.Database.Extensions;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using MongoDB.Driver;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Cve.Net.Search.Infrastructure.Services.Cve
@@ -54,7 +59,57 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
 
         public async Task LogChanges(CveMongoModel old, CveMongoModel newItem)
         {
-            throw new System.NotImplementedException();
+            var changes = GetChanges(old, newItem);
+
+            if (changes.Any())
+                await CreateNewItem(new CveModifiedMongoModel
+                {
+                    Changes= changes.ToArray(),
+                    CveId = old.CveId,
+                    Modified = newItem.Modified
+                });
+        }
+
+        private static IEnumerable<Change> GetChanges(CveMongoModel old, CveMongoModel changedCve)
+        {
+            var changes = new List<Change>();
+
+            if (old.Assigner != changedCve.Assigner)
+                changes.Add(GetChange(old.Assigner, changedCve.Assigner, nameof(CveMongoModel.Assigner)));
+
+            if (old.Summary != changedCve.Summary)
+                changes.Add(GetChange(old.Summary, changedCve.Summary, nameof(CveMongoModel.Summary)));
+
+            if (!ObjectExtensions.ObjectsAreEqual(old.Cvss2, changedCve.Cvss2))
+                changes.Add(GetChange(old.Cvss2.ToString(), changedCve.Cvss2.ToString(), nameof(CveMongoModel.Cvss2)));
+
+            if (!ObjectExtensions.ObjectsAreEqual(old.Cvss3, changedCve.Cvss3))
+                changes.Add(GetChange(old.Cvss3.ToString(), changedCve.Cvss3.ToString(), nameof(CveMongoModel.Cvss3)));
+
+            if (!ObjectExtensions.ObjectsAreEqual(old.References, changedCve.References))
+                changes.Add(GetChange(old.References.Select(s => s.ToString()).JoinToString(", \n"),
+                    changedCve.References.Select(s => s.ToString()).JoinToString(", \n"), nameof(CveMongoModel.References)));
+
+            if (!ObjectExtensions.ObjectsAreEqual(old.VulnerableConfigurations, changedCve.VulnerableConfigurations))
+                changes.Add(GetChange(old.VulnerableConfigurations.Select(s => s.ToString()).JoinToString(", \n"),
+                    changedCve.VulnerableConfigurations.Select(s => s.ToString()).JoinToString(", \n"), nameof(CveMongoModel.VulnerableConfigurations)));
+
+            if (!ObjectExtensions.ObjectsAreEqual(old.Cwes, changedCve.Cwes))
+                changes.Add(GetChange(old.Cwes.Select(s => s.ToString()).JoinToString(", \n"),
+                    changedCve.Cwes.Select(s => s.ToString()).JoinToString(", \n"), nameof(CveMongoModel.Cwes)));
+
+            return changes;
+        }
+
+        private static Change GetChange(string oldValue, string newValue, string fieldName)
+        {
+            return new Change
+            {
+                OldValue = oldValue,
+                NewValue = newValue,
+                PropertyDescription = typeof(CveMongoModel).GetFieldDescription(fieldName),
+                PropertyName = fieldName
+            };
         }
     }
 }
