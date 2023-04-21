@@ -103,8 +103,6 @@ namespace Cve.Net.Search.Web
 
             var hangfireAuth = new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
             {
-                RequireSsl = false,
-                SslRedirect = false,
                 LoginCaseSensitive = true,
                 Users = new[]
                 {

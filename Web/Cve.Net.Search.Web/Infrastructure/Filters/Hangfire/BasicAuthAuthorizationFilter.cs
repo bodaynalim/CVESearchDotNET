@@ -1,16 +1,15 @@
 ﻿using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Text;
 using System;
+using System.Text.RegularExpressions;
 
 namespace Cve.Net.Search.Web.Infrastructure.Hangfire
 {
     /// <summary>
-    /// Represents Hangfire authorization filter for basic authentication.
+    /// Represents Hangfire authorization filter for basic authentication
     /// </summary>
-    /// <remarks>If you are using this together with OWIN security, configure Hangfire BEFORE OWIN security configuration.</remarks>
     public class BasicAuthAuthorizationFilter : IDashboardAuthorizationFilter
     {
         private readonly BasicAuthAuthorizationFilterOptions _options;
@@ -25,58 +24,36 @@ namespace Cve.Net.Search.Web.Infrastructure.Hangfire
             _options = options;
         }
 
-        private bool Challenge(HttpContext context)
-        {
-            context.Response.StatusCode = 401;
-            context.Response.Headers.Append("WWW-Authenticate", "Basic realm=\"Hangfire Dashboard\"");
-            return false;
-        }
-
         public bool Authorize(DashboardContext _context)
         {
             var context = _context.GetHttpContext();
-            if ((_options.SslRedirect == true) && (context.Request.Scheme != "https"))
-            {
-                string redirectUri = new UriBuilder("https", context.Request.Host.ToString(), 443, context.Request.Path).ToString();
-
-                context.Response.StatusCode = 301;
-                context.Response.Redirect(redirectUri);
-                return false;
-            }
-
-            if ((_options.RequireSsl == true) && (context.Request.IsHttps == false))
-            {
-                return false;
-            }
 
             string header = context.Request.Headers["Authorization"];
 
-            if (string.IsNullOrWhiteSpace(header) == false)
-            {
-                AuthenticationHeaderValue authValues = AuthenticationHeaderValue.Parse(header);
+            // Get authorization key
+            var authorizationHeader = context.Request.Headers["Authorization"].ToString();
+            var authHeaderRegex = new Regex(@"Basic (.*)");
 
-                if ("Basic".Equals(authValues.Scheme, StringComparison.OrdinalIgnoreCase))
-                {
-                    string parameter = Encoding.UTF8.GetString(Convert.FromBase64String(authValues.Parameter));
-                    var parts = parameter.Split(':');
+            if (!authHeaderRegex.IsMatch(authorizationHeader))
+                return Unathorized(context);
 
-                    if (parts.Length > 1)
-                    {
-                        string login = parts[0];
-                        string password = parts[1];
+            var authBase64 = Encoding.UTF8.GetString(Convert.FromBase64String(authHeaderRegex.Replace(authorizationHeader, "$1")));
+            var authSplit = authBase64.Split(Convert.ToChar(":"), 2);
+            var authUsername = authSplit[0];
+            var authPassword = authSplit.Length > 1 ? authSplit[1] : throw new Exception("Unable to get password");
 
-                        if ((string.IsNullOrWhiteSpace(login) == false) && (string.IsNullOrWhiteSpace(password) == false))
-                        {
-                            return _options
-                                .Users
-                                .Any(user => user.Validate(login, password, _options.LoginCaseSensitive))
-                                   || Challenge(context);
-                        }
-                    }
-                }
-            }
-
-            return Challenge(context);
+            return _options.Users.Any(user => user.Validate(authUsername, authPassword, _options.LoginCaseSensitive)) || Unathorized(context);            
         }
+
+        #region Private
+
+        private static bool Unathorized(HttpContext context)
+        {
+            context.Response.StatusCode = 401;
+            context.Response.Headers.Append("WWW-Authenticate", "Basic");
+            return false;
+        }
+
+        #endregion
     }
 }

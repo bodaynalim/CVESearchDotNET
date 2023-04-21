@@ -27,7 +27,7 @@ namespace Cve.Net.Search.Web.Infrastructure.Hangfire
         {
             set
             {
-                using (var cryptoProvider = SHA1.Create())
+                using (var cryptoProvider = SHA256.Create())
                 {
                     Password = cryptoProvider.ComputeHash(Encoding.UTF8.GetBytes(value));
                 }
@@ -43,22 +43,13 @@ namespace Cve.Net.Search.Web.Infrastructure.Hangfire
         /// <returns></returns>
         public bool Validate(string login, string password, bool loginCaseSensitive)
         {
-            if (string.IsNullOrWhiteSpace(login) == true)
-                throw new ArgumentNullException("login");
-
-            if (string.IsNullOrWhiteSpace(password) == true)
-                throw new ArgumentNullException("password");
-
-            if (login.Equals(Login, loginCaseSensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase) == true)
-            {
-                using (var cryptoProvider = SHA1.Create())
-                {
-                    byte[] passwordHash = cryptoProvider.ComputeHash(Encoding.UTF8.GetBytes(password));
-                    return StructuralComparisons.StructuralEqualityComparer.Equals(passwordHash, Password);
-                }
-            }
-            else
+            if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password) || 
+                !login.Equals(Login, loginCaseSensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase))
                 return false;
+
+            using var cryptoProvider = SHA256.Create();
+            byte[] passwordHash = cryptoProvider.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return StructuralComparisons.StructuralEqualityComparer.Equals(passwordHash, Password);
         }
     }
 }

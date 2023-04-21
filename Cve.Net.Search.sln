@@ -25,6 +25,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cve.Net.Search.Web", "Web\C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cve.Net.Search.Domain.Common", "Domain\Cve.Net.Search.Domain.Common\Cve.Net.Search.Domain.Common.csproj", "{7B7ABBD7-5D5D-4DA6-A5AB-7DE9A747347C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CA2F833C-5D62-4143-8934-89A9AE8B92CE}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
