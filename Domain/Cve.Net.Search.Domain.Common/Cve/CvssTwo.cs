@@ -47,15 +47,15 @@
 
         public override string ToString()
         {
-            return $"CVSS 2.0: \n" +
-                $"Access: {Access}\n" +
-                $"Impact: {Impact}\n" +
-                $"Impact score: {ImpactScore}\n" +
-                $"Base score: {BaseScore}\n" +
-                $"Exploitability score: {ExploitabilityScore}\n" +
-                $"Vector string: {VectorString}\n" +
-                $"Severity: {Severity}\n" +
-                $"Version: {Version}";
+            return $"CVSS 2.0: \n " +
+                $"Access: {Access}\n " +
+                $"Impact: {Impact}\n " +
+                $"Impact score: {ImpactScore}\n " +
+                $"Base score: {BaseScore}\n " +
+                $"Exploitability score: {ExploitabilityScore}\n " +
+                $"Vector string: {VectorString}\n " +
+                $"Severity: {Severity}\n " +
+                $"Version: {Version} ";
         }
     }
 
