@@ -54,9 +54,10 @@ namespace Cve.Net.Search.Domain.Database.MongoModels.Cve
 
         public override string ToString()
         {
-            return $"Url: {Url}\n " +
-                $"Name: {Name}\n " +
-                $"Refsource: {Refsource}\n " +
+            return $"Reference: \n" +
+                $"Url: {Url} \n" +
+                $"Name: {Name} \n" +
+                $"Refsource: {Refsource} \n" +
                 $"Tags: {Tags.JoinToString(", ")}";
         }
     }

@@ -37,12 +37,12 @@
 
         public override string ToString()
         {
-            return $"Cpe 2.3:\n " +
-                $"Version start excluding: {VersionStartExcluding}\n " +
-                $"Version start including: {VersionStartIncluding}\n " +
-                $"Version end excluding: {VersionEndExcluding}\n " +
-                $"Version end including: {VersionEndIncluding}\n " +
-                $"Vulnarable: {Vulnerable}\n " +
+            return $"Cpe 2.3: \n" +
+                $"Version start excluding: {VersionStartExcluding} \n" +
+                $"Version start including: {VersionStartIncluding} \n" +
+                $"Version end excluding: {VersionEndExcluding} \n" +
+                $"Version end including: {VersionEndIncluding} \n" +
+                $"Vulnarable: {Vulnerable} \n" +
                 $"Cpe Uri: {CpeUri}";
         }
     }

@@ -80,6 +80,9 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
             if (old.Summary != changedCve.Summary)
                 changes.Add(GetChange(old.Summary, changedCve.Summary, nameof(CveMongoModel.Summary)));
 
+            if (old.Modified != changedCve.Modified)
+                changes.Add(GetChange(old.Modified.ToString(), changedCve.Modified.ToString(), nameof(CveMongoModel.Modified)));
+
             if (!ObjectExtensions.ObjectsAreEqual(old.Cvss2, changedCve.Cvss2))
                 changes.Add(GetChange(old.Cvss2.ToString(), changedCve.Cvss2.ToString(), nameof(CveMongoModel.Cvss2)));
 
