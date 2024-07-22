@@ -33,6 +33,9 @@ namespace Cve.Net.Search.Domain.Database.MongoModels.Cve
         [Description("Common Vulnerability Scoring System v3 (CVSS3)")]
         public CvssThree Cvss3 { get; set; }
 
+        [Description("Common Vulnerability Scoring System v3.1 (CVSS3.1)")]
+        public CvssThree Cvss31 { get; set; }
+
         [Description("References")]
         public Reference[] References { get; set; }
 
@@ -54,11 +57,7 @@ namespace Cve.Net.Search.Domain.Database.MongoModels.Cve
 
         public override string ToString()
         {
-            return $"Reference: \n" +
-                $"Url: {Url} \n" +
-                $"Name: {Name} \n" +
-                $"Refsource: {Refsource} \n" +
-                $"Tags: {Tags.JoinToString(", ")}";
+            return $"Reference: {Url} [{Tags.JoinToString(", ")}]";
         }
     }
 

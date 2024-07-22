@@ -80,11 +80,11 @@ namespace Cve.Net.Search.Web
 
             builder.Services.AddSingleton<ICweMongoService, CweMongoService>();
             builder.Services.AddSingleton<ICveMongoService, CveMongoService>();
-            builder.Services.AddSingleton<ICveModifiedMongoService, CveModifiedMongoService>();
             builder.Services.AddSingleton<ICapecMongoService, CapecMongoService>();
             builder.Services.AddSingleton<IVendorMongoService, VendorMongoService>();
             builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
             builder.Services.AddAutoMapper(typeof(VulnerabilitiesProfile));
+            builder.Services.AddHealthChecks();
 
             var app = builder.Build();
 
@@ -97,6 +97,8 @@ namespace Cve.Net.Search.Web
 
             app.UseHttpsRedirection();
             app.UseAuthorization();
+
+            app.MapHealthChecks("/health");
 
             var dashboardUserConfig =
                 app.Configuration.GetSection("HangfireDashboarAuth").Get<HangfireDashboardAuth>();
@@ -128,7 +130,13 @@ namespace Cve.Net.Search.Web
 
             RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially(), Cron.Never);
 
-            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadNewAndModifiedCves(), "0 * * * *");
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadNewAndModifiedPerHourCves(), "0 * * * *");
+
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadCurrentYearCves(), Cron.Daily);
+
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadCwesAndCapecs(), Cron.Daily);
+
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadCurrentDayCves(), "30 */3 * * *");
 
             app.MapControllers();
 

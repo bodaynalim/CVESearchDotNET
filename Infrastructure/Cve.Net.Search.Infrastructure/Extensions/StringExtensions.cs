@@ -15,5 +15,13 @@ namespace Cve.Infrastructure.Extensions
 
             return input;
         }
+
+        public static string ReplaceNullCheck(this string input, string toReplace, string valueToSet)
+        {
+            if (input != null)
+                input = input.Replace(toReplace, valueToSet, StringComparison.OrdinalIgnoreCase);
+
+            return input;
+        }
     }
 }

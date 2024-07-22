@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Hangfire.Core" Version="1.7.31" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Domain\Cve.Net.Search.Domain.Database\Cve.Net.Search.Domain.Database.csproj" />
   </ItemGroup>
 

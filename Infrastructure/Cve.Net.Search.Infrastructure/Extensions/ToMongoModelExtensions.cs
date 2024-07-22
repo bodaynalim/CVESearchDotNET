@@ -1,6 +1,7 @@
 ﻿using Cve.Net.Search.Domain.Common.Capec;
 using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
+using Cve.Net.Search.Domain.Database.CveXmlJsonModels.NVDApi.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Capec;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
@@ -56,17 +57,32 @@ namespace Cve.Infrastructure.Extensions
 
         public static (CveMongoModel, VulnarableProducts[]) ToCveMongoModel(this CveItemModel cveItem)
         {
+            Func<Def_cpe_match, CpeTwoThree> cpeMongo = (s) => new CpeTwoThree
+            {
+                CpeUri = s.Cpe23Uri,
+                VersionEndExcluding = s.VersionEndExcluding,
+                VersionEndIncluding = s.VersionEndIncluding,
+                VersionStartExcluding = s.VersionStartExcluding,
+                VersionStartIncluding = s.VersionStartIncluding,
+                Vulnerable = s.Vulnerable
+            };
+
             var cpesTwoThree = cveItem.Configurations.Nodes.SelectMany(s => s.Cpe_match)
                                 .Where(c => c.Vulnerable)
-                                .Select(s => new CpeTwoThree
-                                {
-                                    CpeUri = s.Cpe23Uri,
-                                    VersionEndExcluding = s.VersionEndExcluding,
-                                    VersionEndIncluding = s.VersionEndIncluding,
-                                    VersionStartExcluding = s.VersionStartExcluding,
-                                    VersionStartIncluding = s.VersionStartIncluding,
-                                    Vulnerable = s.Vulnerable
-                                }).ToArray();
+                                .Select(cpeMongo)
+                                .ToArray();
+
+            if (cveItem.Configurations.Nodes.Any(s => s.Children?.Any() == true))
+            {
+                var cpeChildren = cveItem.Configurations.Nodes.SelectMany(s => s.Children)
+                     .SelectMany(s => s.Cpe_match)
+                     .Where(c => c.Vulnerable && cpesTwoThree.All(s => s.CpeUri != c.Cpe23Uri))
+                     .Select(cpeMongo)
+                     .ToArray();
+
+                if (cpeChildren.Any())
+                    cpesTwoThree = cpesTwoThree.Concat(cpeChildren).ToArray();
+            }
 
             var vendorsAndProducts = cpesTwoThree.Select(s => s.CpeUri.Split(':', StringSplitOptions.RemoveEmptyEntries))
                 .Select(v => new { Vendor = v[3], Software = v[4], Version = v[5], Os = v[10], Bitness = v[11] })
@@ -76,7 +92,9 @@ namespace Cve.Infrastructure.Extensions
                     Softwares = v.GroupBy(s => s.Software).Select(g => new SoftwareWithVersions
                     {
                         SoftwareName = g.Key,
-                        Versions = g.Select(v => new VersionOs { Version = v.Version, Os = v.Os, Bitness = v.Bitness }).Distinct().ToArray()
+                        Versions = g.Select(v => new VersionOs { Version = v.Version, Os = v.Os, Bitness = v.Bitness })
+                                    .DistinctBy(s => $"{s.Version} {s.Os} {s.Bitness}")
+                                    .ToArray()
                     }).ToArray()
                 }).ToArray();
 
@@ -142,6 +160,133 @@ namespace Cve.Infrastructure.Extensions
                     Url = r.Url
                 }).ToArray(),
                 Summary = cveItem.Cve.Description.Description_data.Select(s => s.Value).JoinToString(" "),
+                VulnerableConfigurations = cpesTwoThree,
+                Products = vendorsAndProducts
+            }, vendorsAndProducts);
+        }
+
+        public static (CveMongoModel, VulnarableProducts[]) ToCveMongoModel(this CveItemNewApi cveItem)
+        {
+            Func<Cpe_match, CpeTwoThree> cpeMongo = (s) => new CpeTwoThree
+            {
+                CpeUri = s.Criteria,
+                VersionEndExcluding = s.VersionEndExcluding,
+                VersionEndIncluding = s.VersionEndIncluding,
+                VersionStartExcluding = s.VersionStartExcluding,
+                VersionStartIncluding = s.VersionStartIncluding,
+                Vulnerable = s.Vulnerable
+            };
+
+            var cpesTwoThree = cveItem.Cve.Configurations?.SelectMany(s => s.Nodes).SelectMany(s => s.CpeMatch)
+                                .Where(c => c.Vulnerable)
+                                .Select(cpeMongo)
+                                .ToArray() ?? Array.Empty<CpeTwoThree>();
+
+            var vendorsAndProducts = cpesTwoThree.Select(s => s.CpeUri.Split(':', StringSplitOptions.RemoveEmptyEntries))
+                .Select(v => new { Vendor = v[3], Software = v[4], Version = v[5], Os = v[10], Bitness = v[11] })
+                .GroupBy(v => v.Vendor).Select(v => new VulnarableProducts
+                {
+                    Vendor = v.Key,
+                    Softwares = v.GroupBy(s => s.Software).Select(g => new SoftwareWithVersions
+                    {
+                        SoftwareName = g.Key,
+                        Versions = g.Select(v => new VersionOs { Version = v.Version, Os = v.Os, Bitness = v.Bitness })
+                                    .DistinctBy(s => $"{s.Version} {s.Os} {s.Bitness}")
+                                    .ToArray()
+                    }).ToArray()
+                }).ToArray();
+
+            var cvssvTwo = cveItem.Cve.Metrics.CvssMetricV2?.FirstOrDefault();
+
+            var cvssvThree = cveItem.Cve.Metrics.CvssMetricV30?.FirstOrDefault();
+
+            var cvssvThreeOne = cveItem.Cve.Metrics.CvssMetricV31?.FirstOrDefault();
+
+            return (new CveMongoModel
+            {
+                Published = cveItem.Cve.Published.UtcDateTime,
+                Modified = cveItem.Cve.LastModified.UtcDateTime,
+                CveId = cveItem.Cve.Id,
+                Assigner = cveItem.Cve.SourceIdentifier,
+                Cwes = cveItem.Cve.Weaknesses?.Select(p => new ProblemData
+                {
+                    Cwes = p.Description?.Select(d => d.Value).ToArray()
+                }).ToArray() ?? Array.Empty<ProblemData>(),
+                Cvss2 = new CvssTwo
+                {
+                    Access = new AccessTwo
+                    {
+                        Authentication = cvssvTwo?.CvssData?.Authentication.ToString(),
+                        Complexity = cvssvTwo?.CvssData?.AccessComplexity.ToString(),
+                        Vector = cvssvTwo?.CvssData?.AccessVector.ToString()
+                    },
+                    VectorString = cvssvTwo?.CvssData?.VectorString,
+                    BaseScore = cvssvTwo?.CvssData?.BaseScore,
+                    ExploitabilityScore = cvssvTwo?.ExploitabilityScore,
+                    Severity = cvssvTwo?.BaseSeverity,
+                    ImpactScore = cvssvTwo?.ImpactScore,
+                    Impact = new Impact
+                    {
+                        Availability = cvssvTwo?.CvssData?.AvailabilityImpact.ToString(),
+                        Confidentiality = cvssvTwo?.CvssData?.ConfidentialityImpact.ToString(),
+                        Integrity = cvssvTwo?.CvssData?.IntegrityImpact.ToString()
+                    },
+                    Version = cvssvTwo?.CvssData?.Version.ToString()
+                },
+                Cvss3 = new CvssThree
+                {
+                    Attack = new AttackThree
+                    {
+                        Complexity = cvssvThree?.CvssData?.AttackComplexity.ToString(),
+                        Vector = cvssvThree?.CvssData?.AttackVector.ToString(),
+                        PrivilegesRequired = cvssvThree?.CvssData?.PrivilegesRequired.ToString(),
+                        Scope = cvssvThree?.CvssData?.Scope.ToString(),
+                        UserInteraction = cvssvThree?.CvssData?.UserInteraction.ToString(),
+                    },
+                    VectorString = cvssvThree?.CvssData?.VectorString,
+                    BaseScore = cvssvThree?.CvssData?.BaseScore,
+                    ExploitabilityScore = cvssvThree?.ExploitabilityScore,
+                    ImpactScore = cvssvThree?.ImpactScore,
+                    Impact = new Impact
+                    {
+                        Availability = cvssvThree?.CvssData?.AvailabilityImpact.ToString(),
+                        Confidentiality = cvssvThree?.CvssData?.ConfidentialityImpact.ToString(),
+                        Integrity = cvssvThree?.CvssData?.IntegrityImpact.ToString()
+                    },
+                    BaseSeverity = cvssvThree?.CvssData?.BaseSeverity.ToString(),
+                    Version = cvssvThree?.CvssData?.Version.ToString()
+                },
+                Cvss31 = new CvssThree
+                {
+                    Attack = new AttackThree
+                    {
+                        Complexity = cvssvThreeOne?.CvssData?.AttackComplexity.ToString(),
+                        Vector = cvssvThreeOne?.CvssData?.AttackVector.ToString(),
+                        PrivilegesRequired = cvssvThreeOne?.CvssData?.PrivilegesRequired.ToString(),
+                        Scope = cvssvThreeOne?.CvssData?.Scope.ToString(),
+                        UserInteraction = cvssvThreeOne?.CvssData?.UserInteraction.ToString(),
+                    },
+                    VectorString = cvssvThreeOne?.CvssData?.VectorString,
+                    BaseScore = cvssvThreeOne?.CvssData?.BaseScore,
+                    ExploitabilityScore = cvssvThreeOne?.ExploitabilityScore,
+                    ImpactScore = cvssvThreeOne?.ImpactScore,
+                    Impact = new Impact
+                    {
+                        Availability = cvssvThreeOne?.CvssData?.AvailabilityImpact.ToString(),
+                        Confidentiality = cvssvThreeOne?.CvssData?.ConfidentialityImpact.ToString(),
+                        Integrity = cvssvThreeOne?.CvssData?.IntegrityImpact.ToString()
+                    },
+                    BaseSeverity = cvssvThreeOne?.CvssData?.BaseSeverity.ToString(),
+                    Version = cvssvThreeOne?.CvssData?.Version.ToString()
+                },
+                References = cveItem.Cve.References?.Select(r => new Reference
+                {
+                    Name = r.Url,
+                    Refsource = r.Source,
+                    Tags = r.Tags?.ToArray() ?? Array.Empty<string>(),
+                    Url = r.Url
+                }).ToArray() ?? Array.Empty<Reference>(),
+                Summary = cveItem.Cve.Descriptions?.FirstOrDefault()?.Value,
                 VulnerableConfigurations = cpesTwoThree,
                 Products = vendorsAndProducts
             }, vendorsAndProducts);

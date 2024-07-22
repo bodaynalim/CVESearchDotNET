@@ -10,9 +10,7 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
 {
     public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
     {
-        private readonly ICveModifiedMongoService _cveModifiedMongoService;
-
-        public CveMongoService(IMongoDatabase db, ICveModifiedMongoService cveModifiedMongoService) : base(db, "Cves")
+        public CveMongoService(IMongoDatabase db) : base(db, "Cves")
         {
             Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>
                 .IndexKeys
@@ -21,7 +19,6 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
             Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>.IndexKeys.Descending(c => c.Modified)));
             Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>.IndexKeys.Ascending(c => c.Products)));
             Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveMongoModel>(Builders<CveMongoModel>.IndexKeys.Ascending(c => c.VulnerableConfigurations)));
-            _cveModifiedMongoService = cveModifiedMongoService;
         }
 
         public override async Task<CveMongoModel> CreateOrUpdateExisting(CveMongoModel item)
@@ -33,9 +30,6 @@ namespace Cve.Net.Search.Infrastructure.Services.Cve
             else
             {
                 item.Id = any.Id;
-
-                if (item.Modified > any.Modified)
-                    await _cveModifiedMongoService.LogChanges(any, item);
 
                 var result = await Collection.ReplaceOneAsync(e => e.CveId == item.CveId, item);
 

@@ -83,5 +83,12 @@ namespace Cve.Infrastructure.Services
         {
             return Collection.AsQueryable().Select(s => s.Vendor);
         }
+
+        public IEnumerable<string> GetAllVendors(string search, int take)
+        {
+            var searchToLower = search.ToLower();
+
+            return Collection.AsQueryable().Where(s => s.Vendor.Contains(searchToLower)).Take(take).Select(s => s.Vendor);
+        }
     }
 }

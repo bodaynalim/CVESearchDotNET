@@ -18,6 +18,13 @@ FROM build AS publish
 RUN dotnet publish "Cve.Net.Search.Web.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
+
+RUN groupadd -r cve && useradd -u 1000 -r -g cve cve
+
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+RUN chown -R cve:cve /app
+USER 1000
+
 ENTRYPOINT ["dotnet", "Cve.Net.Search.Web.dll"]

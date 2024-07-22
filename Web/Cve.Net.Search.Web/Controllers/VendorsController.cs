@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Cve.Application.Services;
+using Cve.Infrastructure.Extensions;
 using Cve.Net.Search.Domain.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,23 @@ namespace CVESearch.Controllers
         {
             _mapper = mapper;
             _vendorMongoService = vendorMongoService;
+        }
+
+        /// <summary>
+        /// Get vendors by part of name
+        /// </summary>
+        /// <param name="search">Search parameters</param>
+        /// <returns></returns>
+        [HttpGet("search/{search}")]
+        [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+        public IActionResult GetAllVendors(string search)
+        {
+            search = search.ReplaceNullCheck("%2F", "/");
+
+            if (string.IsNullOrEmpty(search) || string.IsNullOrWhiteSpace(search))
+                return Ok(_vendorMongoService.GetAllVendors(string.Empty, 1000));
+
+            return Ok(_vendorMongoService.GetAllVendors(search, 1000));
         }
 
         /// <summary>
@@ -41,6 +59,8 @@ namespace CVESearch.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetProductsByVendor(string vendor)
         {
+            vendor = vendor.ReplaceNullCheck("%2F", "/");
+
             var vendorModel = await _vendorMongoService.Get(vendor);
 
             if (vendorModel == null)

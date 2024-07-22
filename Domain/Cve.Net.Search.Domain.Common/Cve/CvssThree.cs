@@ -1,7 +1,7 @@
 ﻿namespace Cve.Net.Search.Domain.Common.Cve
 {
     /// <summary>
-    /// Common Vulnerability Scoring System v3 (CVSS3)
+    /// Common Vulnerability Scoring System v3. (CVSS3.)
     /// </summary>
     public class CvssThree
     {
@@ -16,7 +16,7 @@
         public Impact Impact { get; set; }
 
         /// <summary>
-        /// CVSS 3.0 base score
+        /// CVSS 3. base score
         /// </summary>
         public double? BaseScore { get; set; }
 
@@ -47,7 +47,7 @@
 
         public override string ToString()
         {
-            return $"CVSS 3.0: \n" +
+            return $"CVSS 3.: \n" +
                 $"Attack: {Attack} \n" +
                 $"Impact: {Impact} \n" +
                 $"Impact score: {ImpactScore} \n" +

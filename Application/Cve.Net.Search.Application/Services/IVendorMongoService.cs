@@ -17,5 +17,13 @@ namespace Cve.Application.Services
         /// </summary>
         /// <returns></returns>
         IEnumerable<string> GetAllVendors();
+
+        /// <summary>
+        /// Get vendors by search parameters
+        /// </summary>
+        /// <param name="search">Search parameter</param>
+        /// <param name="take">Amount to take</param>
+        /// <returns></returns>
+        IEnumerable<string> GetAllVendors(string search, int take);
     }
 }

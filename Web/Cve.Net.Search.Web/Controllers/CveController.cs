@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using Cve.Infrastructure.Extensions;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,11 +33,14 @@ namespace CVESearch.Controllers
         /// <param name="descending">True if order by descending</param>
         /// <param name="byPublished">True if order by published date (else by modified date)</param>
         /// <returns></returns>
-        [HttpGet("search/{vendor}/{product}/{count}/{page}/{descending}")]
+        [HttpGet("search/{vendor}/{product}/{count}/{page}/{descending}/{byPublished}")]
         [ProducesResponseType(typeof(IEnumerable<CveViewModel>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Search(string vendor, string product, int count, int page, bool descending, 
             bool byPublished)
         {
+            vendor = vendor.ReplaceNullCheck("%2F", "/");
+            product = product.ReplaceNullCheck("%2F", "/");
+
             var cves = await _cveMongoService.GetCveList(vendor, product, count, page, descending, byPublished);
 
             return Ok(cves.Select(c => _mapper.Map<CveViewModel>(c)));
@@ -66,16 +71,19 @@ namespace CVESearch.Controllers
         /// <param name="product">Vulnarable product</param>
         /// <returns></returns>
         [HttpGet("last/published/{vendor}/{product}")]
-        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CveViewModel), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetLastPublished(string vendor, string product)
         {
+            vendor = vendor.ReplaceNullCheck("%2F", "/");
+            product = product.ReplaceNullCheck("%2F", "/");
+
             var cve = await _cveMongoService.GetLastOnePublished(vendor, product);
 
             if (cve == null)
                 return NotFound($"CVE for {vendor} {product} is not found");
 
-            return Ok(cve.CveId);
+            return Ok(_mapper.Map<CveViewModel>(cve));
         }
 
         /// <summary>
@@ -85,16 +93,19 @@ namespace CVESearch.Controllers
         /// <param name="product">Vulnarable product</param>
         /// <returns></returns>
         [HttpGet("last/modified/{vendor}/{product}")]
-        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CveViewModel), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetLastModified(string vendor, string product)
         {
+            vendor = vendor.ReplaceNullCheck("%2F", "/");
+            product = product.ReplaceNullCheck("%2F", "/");
+
             var cve = await _cveMongoService.GetLastOneModified(vendor, product);
 
             if (cve == null)
                 return NotFound($"CVE for {vendor} {product} is not found");
 
-            return Ok(cve.CveId);
+            return Ok(_mapper.Map<CveViewModel>(cve));
         }
     }
 }
