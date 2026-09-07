@@ -1,25 +1,23 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json.Serialization;
+using Cve.Application.Helpers;
+using Cve.Application.Services;
+using Cve.Infrastructure.AutoMapper;
 using Cve.Infrastructure.Extensions;
+using Cve.Infrastructure.Helpers;
+using Cve.Infrastructure.Services;
+using Cve.Net.Search.Application.Services.Cve;
+using Cve.Net.Search.Infrastructure.Configuration;
+using Cve.Net.Search.Infrastructure.Services.Cve;
+using Cve.Net.Search.Web.Infrastructure.Hangfire;
 using Hangfire;
 using Hangfire.MemoryStorage;
-using System;
-using Cve.Application.Helpers;
-using Cve.Infrastructure.Helpers;
-using Cve.Application.Services;
-using Cve.Infrastructure.Services;
-using Cve.Infrastructure.AutoMapper;
-using Microsoft.OpenApi.Models;
-using System.IO;
-using Cve.Net.Search.Infrastructure.Configuration;
-using Cve.Net.Search.Application.Services.Cve;
-using Cve.Net.Search.Infrastructure.Services.Cve;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
-using Hangfire.Dashboard;
-using Microsoft.Extensions.Hosting;
-using Cve.Net.Search.Web.Infrastructure.Hangfire;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
+using System;
+using System.IO;
+using System.Text.Json.Serialization;
 
 namespace Cve.Net.Search.Web
 {
@@ -41,9 +39,9 @@ namespace Cve.Net.Search.Web
                 options.IncludeXmlComments(
                     Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Web.xml"));
                 options.IncludeXmlComments(
-                   Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.Common.xml"));                
+                   Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.Common.xml"));
                 options.IncludeXmlComments(
-                    Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.ViewModels.xml")); 
+                    Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.ViewModels.xml"));
             });
 
             builder.Services.Configure<KestrelServerOptions>(options =>
@@ -60,7 +58,7 @@ namespace Cve.Net.Search.Web
             {
                 options.JsonSerializerOptions.WriteIndented = true;
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            }).AddNewtonsoftJson();            
+            }).AddNewtonsoftJson();
 
             builder.Services.AddMongoDb(builder.Configuration);
 
@@ -74,7 +72,7 @@ namespace Cve.Net.Search.Web
                 options.ServerName = "ASP.NET Core In-Process";
                 options.WorkerCount = Environment.ProcessorCount * 2;
             });
-            
+
             builder.Services.Configure<VulnerabilitiesUrls>(builder.Configuration.GetSection("Vulnerabilities"));
             builder.Services.AddHttpClient();
 
@@ -118,7 +116,7 @@ namespace Cve.Net.Search.Web
 
             var options = new DashboardOptions
             {
-                Authorization = new []
+                Authorization = new[]
                 {
                     hangfireAuth
                 }
@@ -128,15 +126,20 @@ namespace Cve.Net.Search.Web
 
             BackgroundJob.Enqueue<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially());
 
-            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially(), Cron.Never);
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(nameof(IVulnerabilitiesJsonHelper.PopulateDatabaseInitially), 
+                job => job.PopulateDatabaseInitially(), Cron.Never);
 
-            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadNewAndModifiedPerHourCves(), "0 * * * *");
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(nameof(IVulnerabilitiesJsonHelper.LoadNewAndModifiedPerHourCves),
+                job => job.LoadNewAndModifiedPerHourCves(), "0 * * * *");
 
-            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadCurrentYearCves(), Cron.Daily);
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(nameof(IVulnerabilitiesJsonHelper.LoadCurrentYearCves), 
+                job => job.LoadCurrentYearCves(), Cron.Daily);
 
-            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadCwesAndCapecs(), Cron.Daily);
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(nameof(IVulnerabilitiesJsonHelper.LoadCwesAndCapecs), 
+                job => job.LoadCwesAndCapecs(), Cron.Daily);
 
-            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(job => job.LoadCurrentDayCves(), "30 */3 * * *");
+            RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(nameof(IVulnerabilitiesJsonHelper.LoadCurrentDayCves), 
+                job => job.LoadCurrentDayCves(), "30 */3 * * *");
 
             app.MapControllers();
 
