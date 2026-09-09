@@ -1,42 +1,46 @@
-﻿using Cve.Net.Search.Domain.Database.MongoModels;
+using Cve.Net.Search.Domain.Database.MongoModels;
 
-namespace Cve.Application.Services
+namespace Cve.Application.Services;
+
+public interface IBaseMongoService<T>
+    where T : BaseMongoModel
 {
-    public interface IBaseMongoService<T>
-        where T : BaseMongoModel
-    {
-        /// <summary>
-        /// Get item by ID
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        Task<T> Get(string id);
+    /// <summary>
+    /// Get item by ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<T> Get(string id, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Create new item in database
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        Task<T> CreateNewItem(T item);
+    /// <summary>
+    /// Create new item in database
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<T> CreateNewItem(T item, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Create or replace existing one item
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        Task<T> CreateOrUpdateExisting(T item);
+    /// <summary>
+    /// Create or replace existing one item
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<T> CreateOrUpdateExisting(T item, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Check if collection contains any item
-        /// </summary>
-        /// <returns></returns>
-        Task<bool> ContainsAnyItems();
+    /// <summary>
+    /// Check if collection contains any item
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<bool> ContainsAnyItems(CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Create new item if not exist
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        Task<T> CreateNewItemIfNotExist(T item);
-    }
+    /// <summary>
+    /// Create new item if not exist
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<T> CreateNewItemIfNotExist(T item, CancellationToken cancellationToken = default);
 }

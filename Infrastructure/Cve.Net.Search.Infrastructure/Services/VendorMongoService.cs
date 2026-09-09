@@ -1,94 +1,102 @@
-﻿using Cve.Application.Services;
+using Cve.Application.Services;
 using Cve.Net.Search.Domain.Database.MongoModels;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Cve.Infrastructure.Services
+namespace Cve.Infrastructure.Services;
+
+public class VendorMongoService : BaseMongoService<VendorProductsMongoModel>, IVendorMongoService
 {
-    public class VendorMongoService : BaseMongoService<VendorProductsMongoModel>, IVendorMongoService
+    public VendorMongoService(IMongoDatabase db) : base(db, "Vendors")
     {
-        public VendorMongoService(IMongoDatabase db) : base(db, "Vendors")
+        var options = new CreateIndexOptions() { Unique = true };
+        Collection.Indexes.CreateOneAsync(new CreateIndexModel<VendorProductsMongoModel>(Builders<VendorProductsMongoModel>.IndexKeys.Ascending(c => c.Vendor), options));
+        Collection.Indexes.CreateOneAsync(new CreateIndexModel<VendorProductsMongoModel>(Builders<VendorProductsMongoModel>.IndexKeys.Descending(c => c.Softwares)));
+    }
+
+    public async Task<VendorProductsMongoModel> CreateOrUpdateVendor(VulnerableProducts vendorModel, CancellationToken cancellationToken = default)
+    {
+        var filter = Builders<VendorProductsMongoModel>.Filter.Eq(x => x.Vendor, vendorModel.Vendor);
+        var vendor = await Collection.Find(filter).FirstOrDefaultAsync(cancellationToken);
+
+        var products = vendorModel.Softwares.Select(s => s.SoftwareName).ToList();
+
+        if (vendor == null)
         {
-            var options = new CreateIndexOptions() { Unique = true };
-            Collection.Indexes.CreateOneAsync(new CreateIndexModel<VendorProductsMongoModel>(Builders<VendorProductsMongoModel>.IndexKeys.Ascending(c => c.Vendor), options));
-            Collection.Indexes.CreateOneAsync(new CreateIndexModel<VendorProductsMongoModel>(Builders<VendorProductsMongoModel>.IndexKeys.Descending(c => c.Softwares)));
-        }
-
-        public async Task<VendorProductsMongoModel> CreateOrUpdateVendor(VulnarableProducts vendorModel)
-        {
-            var filter = Builders<VendorProductsMongoModel>.Filter.Eq(x => x.Vendor, vendorModel.Vendor);
-            var vendor = await Collection.Find(filter).FirstOrDefaultAsync();
-
-            var products = vendorModel.Softwares.Select(s => s.SoftwareName).ToList();
-
-            if (vendor == null)
+            var newItem = new VendorProductsMongoModel
             {
-                var newItem = new VendorProductsMongoModel
-                {
-                    Vendor = vendorModel.Vendor,
-                    Softwares = products
-                };
+                Vendor = vendorModel.Vendor,
+                Softwares = products
+            };
 
-                await Collection.InsertOneAsync(newItem);
+            await Collection.InsertOneAsync(newItem, cancellationToken: cancellationToken);
 
-                return newItem;
-            }
-            else
-            {
-                vendor.Softwares.AddRange(products);
-                vendor.Softwares = vendor.Softwares.Distinct().ToList();
-                var result = await Collection.ReplaceOneAsync(Builders<VendorProductsMongoModel>.Filter.Eq(x => x.Id, vendor.Id), vendor);
-
-                return result.IsAcknowledged ? vendor : null;
-            }
+            return newItem;
         }
-
-        public override async Task<VendorProductsMongoModel> CreateOrUpdateExisting(VendorProductsMongoModel item)
+        else
         {
-            var any = await Collection.Find(s => s.Vendor == item.Vendor).FirstOrDefaultAsync();
+            vendor.Softwares.AddRange(products);
+            vendor.Softwares = vendor.Softwares.Distinct().ToList();
+            var result = await Collection.ReplaceOneAsync(Builders<VendorProductsMongoModel>.Filter.Eq(x => x.Id, vendor.Id), vendor, cancellationToken: cancellationToken);
 
-            if (any == null)
-                return await CreateNewItem(item);
-            else
-            {
-                item.Id = any.Id;
-
-                var result = await Collection.ReplaceOneAsync(e => e.Vendor == item.Vendor, item);
-
-                return result.IsAcknowledged && result.MatchedCount > 0 ? item : any;
-            }
+            return result.IsAcknowledged ? vendor : null;
         }
+    }
 
-        public override async Task<VendorProductsMongoModel> CreateNewItemIfNotExist(VendorProductsMongoModel item)
+    public override async Task<VendorProductsMongoModel> CreateOrUpdateExisting(VendorProductsMongoModel item, CancellationToken cancellationToken = default)
+    {
+        var any = await Collection.Find(s => s.Vendor == item.Vendor).FirstOrDefaultAsync(cancellationToken);
+
+        if (any == null)
+            return await CreateNewItem(item, cancellationToken);
+        else
         {
-            var any = await Collection.Find(s => s.Vendor == item.Vendor).FirstOrDefaultAsync();
+            item.Id = any.Id;
 
-            if (any != null)
-                return any;
+            var result = await Collection.ReplaceOneAsync(e => e.Vendor == item.Vendor, item, cancellationToken: cancellationToken);
 
-            await Collection.InsertOneAsync(item);
-
-            return item;
+            return result.IsAcknowledged && result.MatchedCount > 0 ? item : any;
         }
+    }
 
-        public override async Task<VendorProductsMongoModel> Get(string id)
-        {
-            return await Collection.Find(s => s.Vendor == id).FirstOrDefaultAsync();
-        }
+    public override async Task<VendorProductsMongoModel> CreateNewItemIfNotExist(VendorProductsMongoModel item, CancellationToken cancellationToken = default)
+    {
+        var any = await Collection.Find(s => s.Vendor == item.Vendor).FirstOrDefaultAsync(cancellationToken);
 
-        public IEnumerable<string> GetAllVendors()
-        {
-            return Collection.AsQueryable().Select(s => s.Vendor);
-        }
+        if (any != null)
+            return any;
 
-        public IEnumerable<string> GetAllVendors(string search, int take)
-        {
-            var searchToLower = search.ToLower();
+        await Collection.InsertOneAsync(item, cancellationToken: cancellationToken);
 
-            return Collection.AsQueryable().Where(s => s.Vendor.Contains(searchToLower)).Take(take).Select(s => s.Vendor);
-        }
+        return item;
+    }
+
+    public override async Task<VendorProductsMongoModel> Get(string id, CancellationToken cancellationToken = default)
+    {
+        return await Collection.Find(s => s.Vendor == id).FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<string>> GetAllVendors(CancellationToken cancellationToken = default)
+    {
+        var filter = FilterDefinition<VendorProductsMongoModel>.Empty;
+        var result = await Collection.Find(filter)
+            .Project(x => x.Vendor)
+            .ToListAsync(cancellationToken);
+        return result;
+    }
+
+    public async Task<IEnumerable<string>> GetAllVendors(string search, int take, CancellationToken cancellationToken = default)
+    {
+        var searchToLower = search.ToLower();
+        var filter = Builders<VendorProductsMongoModel>.Filter.Regex(x => x.Vendor, new MongoDB.Bson.BsonRegularExpression(searchToLower, "i"));
+        var result = await Collection.Find(filter)
+            .Limit(take)
+            .Project(x => x.Vendor)
+            .ToListAsync(cancellationToken);
+        return result;
     }
 }

@@ -1,32 +1,31 @@
-﻿using Cve.Net.Search.Domain.Common.Capec;
+using Cve.Net.Search.Domain.Common.Capec;
 
-namespace Cve.Net.Search.Domain.ViewModels
+namespace Cve.Net.Search.Domain.ViewModels;
+
+/// <summary>
+/// CAPEC model
+/// </summary>
+public record CapecViewModel
 {
-    /// <summary>
-    /// CAPEC model
-    /// </summary>
-    public class CapecViewModel
-    {
-        public string Name { get; set; }
+    public string Name { get; init; }
 
-        public string CapecId { get; set; }
+    public string CapecId { get; init; }
 
-        public string Summary { get; set; }
+    public string Summary { get; init; }
 
-        public string[] Prerequisites { get; set; }
+    public string[] Prerequisites { get; init; }
 
-        public string[] Solutions { get; set; }
+    public string[] Solutions { get; init; }
 
-        public string[] RelatedCapecs { get; set; }
+    public string[] RelatedCapecs { get; init; }
 
-        public string[] RelatedCwes { get; set; }
+    public string[] RelatedCwes { get; init; }
 
-        public string Severity { get; set; }
+    public string Severity { get; init; }
 
-        public Taxonomy[] Taxonomy { get; set; }
+    public Taxonomy[] Taxonomy { get; init; }
 
-        public string LikelyhoodAttack { get; set; }
+    public string LikelyhoodAttack { get; init; }
 
-        public ExecutionFlowTypeAttack[] ExecutionFlowTypeAttacks { get; set; }
-    }
+    public ExecutionFlowTypeAttack[] ExecutionFlowTypeAttacks { get; init; }
 }

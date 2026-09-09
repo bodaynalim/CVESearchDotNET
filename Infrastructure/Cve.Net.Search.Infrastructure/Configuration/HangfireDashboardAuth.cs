@@ -1,9 +1,8 @@
-﻿namespace Cve.Net.Search.Infrastructure.Configuration
-{
-    public class HangfireDashboardAuth
-    {
-        public string UserName { get; set; }
+namespace Cve.Net.Search.Infrastructure.Configuration;
 
-        public string Password { get; set; }
-    }
+public class HangfireDashboardAuth
+{
+    public string UserName { get; set; }
+
+    public string Password { get; set; }
 }

@@ -1,18 +1,17 @@
-﻿namespace Cve.Net.Search.Domain.ViewModels
+namespace Cve.Net.Search.Domain.ViewModels;
+
+/// <summary>
+/// Vendor with products
+/// </summary>
+public record VendorProductsViewModel
 {
     /// <summary>
-    /// Vendor with products
+    /// Vendor name
     /// </summary>
-    public class VendorProductsViewModel
-    {
-        /// <summary>
-        /// Vendor name
-        /// </summary>
-        public string Vendor { get; set; }
+    public string Vendor { get; init; }
 
-        /// <summary>
-        /// Products
-        /// </summary>
-        public string[] Softwares { get; set; }
-    }
+    /// <summary>
+    /// Products
+    /// </summary>
+    public string[] Softwares { get; init; }
 }

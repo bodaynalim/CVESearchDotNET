@@ -1,17 +1,16 @@
-﻿namespace Cve.Net.Search.Domain.ViewModels
+namespace Cve.Net.Search.Domain.ViewModels;
+
+public record CweViewModel
 {
-    public class CweViewModel
-    {
-        public string CweId { get; set; }
+    public string CweId { get; init; }
 
-        public string Name { get; set; }
+    public string Name { get; init; }
 
-        public string Description { get; set; }
+    public string Description { get; init; }
 
-        public string Status { get; set; }
+    public string Status { get; init; }
 
-        public string Abstraction { get; set; }
+    public string Abstraction { get; init; }
 
-        public string[] RelatedCwes { get; set; }
-    }
+    public string[] RelatedCwes { get; init; }
 }

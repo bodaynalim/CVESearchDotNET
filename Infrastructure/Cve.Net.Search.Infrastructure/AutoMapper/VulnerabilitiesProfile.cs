@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Cve.Net.Search.Domain.ViewModels;
 using Cve.Net.Search.Domain.Database.MongoModels;
 using Cve.Net.Search.Domain.Database.MongoModels.Capec;
@@ -6,25 +6,24 @@ using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
 using System.Linq;
 
-namespace Cve.Infrastructure.AutoMapper
+namespace Cve.Infrastructure.AutoMapper;
+
+public class VulnerabilitiesProfile : Profile
 {
-    public class VulnerabilitiesProfile : Profile
+    public VulnerabilitiesProfile()
     {
-        public VulnerabilitiesProfile()
-        {
-            CreateMap<CweMongoModel,CweViewModel>()
-                .ForMember(m => m.Status, s => s.MapFrom(m => m.Status.ToString()))
-                .ForMember(m => m.Abstraction, s => s.MapFrom(m => m.Abstraction.ToString()));
+        CreateMap<CweMongoModel,CweViewModel>()
+            .ForMember(m => m.Status, s => s.MapFrom(m => m.Status.ToString()))
+            .ForMember(m => m.Abstraction, s => s.MapFrom(m => m.Abstraction.ToString()));
 
-            CreateMap<CapecMongoModel, CapecViewModel>();
+        CreateMap<CapecMongoModel, CapecViewModel>();
 
-            CreateMap<VendorProductsMongoModel, VendorProductsViewModel>();
+        CreateMap<VendorProductsMongoModel, VendorProductsViewModel>();
 
-            CreateMap<CveMongoModel, CveViewModel>()
-                 .ForMember(m => m.ReferencesUrls, s => s.MapFrom(m => m.References.Select(r => r.Url).ToArray()))
-                 .ForMember(m => m.Cvss3, s => s.MapFrom(m => m.Cvss3.BaseScore == null && m.Cvss3.ImpactScore == null ? m.Cvss31 : m.Cvss3))
-                 .ForMember(m => m.Cwes, s => s.MapFrom(m => m.Cwes.SelectMany(r => r.Cwes).ToArray()))
-                 .ForMember(m => m.VulnerableConfigurations, s => s.MapFrom(m => m.VulnerableConfigurations.Select(r => r.CpeUri).ToArray()));
-        }
+        CreateMap<CveMongoModel, CveViewModel>()
+             .ForMember(m => m.ReferencesUrls, s => s.MapFrom(m => m.References.Select(r => r.Url).ToArray()))
+             .ForMember(m => m.Cvss3, s => s.MapFrom(m => m.Cvss3.BaseScore == null && m.Cvss3.ImpactScore == null ? m.Cvss31 : m.Cvss3))
+             .ForMember(m => m.Cwes, s => s.MapFrom(m => m.Cwes.SelectMany(r => r.Cwes).ToArray()))
+             .ForMember(m => m.VulnerableConfigurations, s => s.MapFrom(m => m.VulnerableConfigurations.Select(r => r.CpeUri).ToArray()));
     }
 }
