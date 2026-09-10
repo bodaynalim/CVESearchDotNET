@@ -8,6 +8,7 @@ using Cve.Infrastructure.Services;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Infrastructure.Configuration;
 using Cve.Net.Search.Infrastructure.Services.Cve;
+using Cve.Net.Search.Web.GraphQL;
 using Cve.Net.Search.Web.Infrastructure.Hangfire;
 using Hangfire;
 using Hangfire.MemoryStorage;
@@ -31,11 +32,11 @@ public class Program
             options.SwaggerDoc("cve", new OpenApiInfo { Title = "CVE Search API" });
 
             options.IncludeXmlComments(
-                Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Web.xml"));
+                System.IO.Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Web.xml"));
             options.IncludeXmlComments(
-               Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.Common.xml"));
+               System.IO.Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.Common.xml"));
             options.IncludeXmlComments(
-                Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.ViewModels.xml"));
+                System.IO.Path.Combine(AppContext.BaseDirectory, "Cve.Net.Search.Domain.ViewModels.xml"));
         });
 
         builder.Services.AddMvc().AddJsonOptions(options =>
@@ -68,6 +69,15 @@ public class Program
         builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
         builder.Services.AddAutoMapper(typeof(VulnerabilitiesProfile));
         builder.Services.AddHealthChecks();
+
+        builder.Services
+            .AddGraphQLServer()
+            .AddQueryType<CveQuery>()
+            .AddMongoDbPagingProviders()
+            .AddMongoDbFiltering()
+            .AddMongoDbSorting()
+            .AddMongoDbProjections()
+            .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment()); ;
 
         var app = builder.Build();
 
@@ -127,6 +137,8 @@ public class Program
             job => job.LoadCurrentDayCves(CancellationToken.None), "30 */3 * * *");
 
         app.MapControllers();
+
+        app.MapGraphQL();
 
         app.Run();
     }

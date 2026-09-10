@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Hangfire.Core" Version="1.8.15" />
+    <PackageReference Include="HotChocolate.Abstractions" Version="14.3.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Domain\Cve.Net.Search.Domain.Database\Cve.Net.Search.Domain.Database.csproj" />

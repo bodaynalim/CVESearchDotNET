@@ -1,4 +1,5 @@
 using Cve.Net.Search.Domain.Database.MongoModels;
+using HotChocolate;
 
 namespace Cve.Application.Services;
 
@@ -43,4 +44,10 @@ public interface IBaseMongoService<T>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<T> CreateNewItemIfNotExist(T item, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get IQueryable for filtering, sorting and projections
+    /// </summary>
+    /// <returns></returns>
+    IExecutable<T> AsExecutable();
 }

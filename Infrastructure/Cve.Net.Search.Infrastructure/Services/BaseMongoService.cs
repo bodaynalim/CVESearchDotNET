@@ -1,5 +1,7 @@
 using Cve.Application.Services;
 using Cve.Net.Search.Domain.Database.MongoModels;
+using HotChocolate;
+using HotChocolate.Data;
 using MongoDB.Driver;
 using System.Threading.Tasks;
 
@@ -51,4 +53,10 @@ public abstract class BaseMongoService<T> : IBaseMongoService<T>
 
     /// <inheritdoc />
     public abstract Task<T> Get(string id, CancellationToken cancellationToken = default);
+
+    /// <inheritdoc />
+    public IExecutable<T> AsExecutable()
+    {
+        return Collection.AsExecutable();
+    }
 }
