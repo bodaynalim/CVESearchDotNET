@@ -19,6 +19,8 @@ public interface ICveMongoService : IBaseMongoService<CveMongoModel>
     Task<IList<CveMongoModel>> GetCveList(string vendor, string product, int count,
         int page, bool descending, bool byPublished = true, CancellationToken cancellationToken = default);
 
+    Task<long> CountCves(string vendor, string product, CancellationToken cancellationToken = default);
+
     Task<CveMongoModel> GetLastOnePublished(string vendor, string product, CancellationToken cancellationToken = default);
 
     Task<CveMongoModel> GetLastOneModified(string vendor, string product, CancellationToken cancellationToken = default);

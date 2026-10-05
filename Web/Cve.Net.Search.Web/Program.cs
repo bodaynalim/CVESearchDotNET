@@ -70,6 +70,18 @@ public class Program
         builder.Services.AddAutoMapper(typeof(VulnerabilitiesProfile));
         builder.Services.AddHealthChecks();
 
+        var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
+        if (corsOrigins.Length > 0)
+        {
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("CveUi", policy =>
+                    policy.WithOrigins(corsOrigins)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+            });
+        }
+
         builder.Services
             .AddGraphQLServer()
             .AddQueryType<CveQuery>()
@@ -89,6 +101,10 @@ public class Program
         });
 
         app.UseHttpsRedirection();
+
+        if (corsOrigins.Length > 0)
+            app.UseCors("CveUi");
+
         app.UseAuthorization();
 
         app.MapHealthChecks("/health");

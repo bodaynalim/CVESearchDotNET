@@ -58,6 +58,13 @@ public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
         return await result.ToListAsync(cancellationToken);
     }
 
+    public async Task<long> CountCves(string vendor, string product, CancellationToken cancellationToken = default)
+    {
+        var filter = GetVendorProductFilter(vendor, product);
+
+        return await Collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
+    }
+
     public override async Task<CveMongoModel> CreateNewItemIfNotExist(CveMongoModel item, CancellationToken cancellationToken = default)
     {
         var any = await Collection.Find(s => s.CveId == item.CveId).FirstOrDefaultAsync(cancellationToken);

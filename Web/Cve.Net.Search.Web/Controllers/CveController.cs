@@ -57,6 +57,27 @@ public class CveController : Controller
     }
 
     /// <summary>
+    /// Count CVEs for vendor and product
+    /// </summary>
+    /// <param name="vendor">Vulnerable vendor</param>
+    /// <param name="product">Vulnerable product</param>
+    [HttpGet("search/{vendor}/{product}/count")]
+    [ProducesResponseType(typeof(CveSearchCountViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Count(
+        [FromRoute][Required] string vendor,
+        [FromRoute][Required] string product,
+        CancellationToken cancellationToken)
+    {
+        vendor = vendor.ReplaceNullCheck("%2F", "/");
+        product = product.ReplaceNullCheck("%2F", "/");
+
+        var total = await _cveMongoService.CountCves(vendor, product, cancellationToken);
+
+        return Ok(new CveSearchCountViewModel { Total = total });
+    }
+
+    /// <summary>
     /// Get CVE by ID
     /// </summary>
     /// <param name="cveId">CVE ID (ex. CVE-2018-0001)</param>
