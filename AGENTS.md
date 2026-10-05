@@ -2,6 +2,12 @@
 
 You are acting as a Senior C# / .NET Software Engineer. When generating, refactoring, or reviewing code in this repository, strictly adhere to the following principles and conventions.
 
+## 0. Filesystem Search Caveats
+
+* **Dot-directories are hidden from glob/grep tools** (e.g., `.opencode/`, `.github/`, `.vs/`).
+  * Glob patterns like `.opencode/**` may return "No files found" even when the directory exists.
+  * Before concluding a dot-directory or its files do not exist, verify with `Get-ChildItem -Force` (PowerShell) or a directory read.
+
 ---
 
 ## 1. Core Architectural & Design Principles
