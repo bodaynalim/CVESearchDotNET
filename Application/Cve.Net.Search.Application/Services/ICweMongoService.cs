@@ -1,8 +1,7 @@
-﻿using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
+using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
 
-namespace Cve.Application.Services
+namespace Cve.Application.Services;
+
+public interface ICweMongoService : IBaseMongoService<CweMongoModel>
 {
-    public interface ICweMongoService : IBaseMongoService<CweMongoModel>
-    {
-    }
 }

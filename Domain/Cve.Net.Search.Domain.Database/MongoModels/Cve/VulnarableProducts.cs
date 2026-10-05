@@ -1,28 +1,27 @@
-﻿namespace Cve.Net.Search.Domain.Database.MongoModels.Cve
+namespace Cve.Net.Search.Domain.Database.MongoModels.Cve;
+
+/// <summary>
+/// Vulnerable vendor with products
+/// </summary>
+public class VulnerableProducts
 {
-    /// <summary>
-    /// Vulnarable vendor with products
-    /// </summary>
-    public class VulnarableProducts
-    {
-        public string Vendor { get; set; }
+    public string Vendor { get; set; }
 
-        public SoftwareWithVersions[] Softwares { get; set; }
-    }
+    public SoftwareWithVersions[] Softwares { get; set; }
+}
 
-    public class SoftwareWithVersions
-    {
-        public string SoftwareName { get; set; }
+public class SoftwareWithVersions
+{
+    public string SoftwareName { get; set; }
 
-        public VersionOs[] Versions { get; set; }
-    }
+    public VersionOs[] Versions { get; set; }
+}
 
-    public class VersionOs
-    {
-        public string Version { get; set; }
+public class VersionOs
+{
+    public string Version { get; set; }
 
-        public string Os { get; set; }
+    public string Os { get; set; }
 
-        public string Bitness { get; set; }
-    }
+    public string Bitness { get; set; }
 }

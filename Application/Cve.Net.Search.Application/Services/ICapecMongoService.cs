@@ -1,8 +1,7 @@
-﻿using Cve.Net.Search.Domain.Database.MongoModels.Capec;
+using Cve.Net.Search.Domain.Database.MongoModels.Capec;
 
-namespace Cve.Application.Services
+namespace Cve.Application.Services;
+
+public interface ICapecMongoService : IBaseMongoService<CapecMongoModel>
 {
-    public interface ICapecMongoService : IBaseMongoService<CapecMongoModel>
-    {
-    }
 }

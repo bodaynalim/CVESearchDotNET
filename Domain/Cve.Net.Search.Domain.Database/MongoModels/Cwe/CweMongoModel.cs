@@ -1,22 +1,21 @@
-﻿using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
+using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
 
-namespace Cve.Net.Search.Domain.Database.MongoModels.Cwe
+namespace Cve.Net.Search.Domain.Database.MongoModels.Cwe;
+
+/// <summary>
+/// CWE mongo model
+/// </summary>
+public class CweMongoModel : BaseMongoModel
 {
-    /// <summary>
-    /// CWE mongo model
-    /// </summary>
-    public class CweMongoModel : BaseMongoModel
-    {
-        public string CweId { get; set; }
+    public string CweId { get; set; }
 
-        public string Name { get; set; }
+    public string Name { get; set; }
 
-        public string Description { get; set; }
+    public string Description { get; set; }
 
-        public StatusEnumeration Status { get; set; }
+    public StatusEnumeration Status { get; set; }
 
-        public AbstractionEnumeration Abstraction { get; set; }
+    public AbstractionEnumeration Abstraction { get; set; }
 
-        public string[] RelatedCwes { get; set; }
-    }
+    public string[] RelatedCwes { get; set; }
 }

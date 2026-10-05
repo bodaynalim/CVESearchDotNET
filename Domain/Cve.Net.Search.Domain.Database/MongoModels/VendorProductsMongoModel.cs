@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
-namespace Cve.Net.Search.Domain.Database.MongoModels
+namespace Cve.Net.Search.Domain.Database.MongoModels;
+
+public class VendorProductsMongoModel : BaseMongoModel
 {
-    public class VendorProductsMongoModel : BaseMongoModel
-    {
-        public string Vendor { get; set; }
+    public string Vendor { get; set; }
 
-        public List<string> Softwares { get; set; }
-    }
+    public List<string> Softwares { get; set; }
 }

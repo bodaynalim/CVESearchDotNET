@@ -1,7 +1,7 @@
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS build
 WORKDIR /src
 COPY ["Web/Cve.Net.Search.Web/Cve.Net.Search.Web.csproj", "Web/Cve.Net.Search.Web/"]
 COPY ["Application/Cve.Net.Search.Application/Cve.Net.Search.Application.csproj", "Application/Cve.Net.Search.Application/"]
