@@ -24,13 +24,29 @@ public class CapecMongoService : BaseMongoService<CapecMongoModel>, ICapecMongoS
         if (items.Count == 0)
             return;
 
+        // A replacement document carrying a null `_id` would alter the immutable
+        // field on every update (bulk write error code 66). Pin each replacement
+        // to its existing document's `_id` first.
+        var capecIds = items.DistinctBy(s => s.CapecId).Select(s => s.CapecId).ToList();
+        var existingIds = await Collection
+            .Find(Builders<CapecMongoModel>.Filter.In(c => c.CapecId, capecIds))
+            .Project(s => new { s.CapecId, s.Id })
+            .ToListAsync(cancellationToken);
+        var idByCapecId = existingIds.ToDictionary(x => x.CapecId, x => x.Id);
+
         var bulkModels = items
             .DistinctBy(s => s.CapecId)
-            .Select(s => new ReplaceOneModel<CapecMongoModel>(
-                Builders<CapecMongoModel>.Filter.Eq(c => c.CapecId, s.CapecId),
-                s)
+            .Select(s =>
             {
-                IsUpsert = true
+                if (idByCapecId.TryGetValue(s.CapecId, out var id))
+                    s.Id = id;
+
+                return new ReplaceOneModel<CapecMongoModel>(
+                    Builders<CapecMongoModel>.Filter.Eq(c => c.CapecId, s.CapecId),
+                    s)
+                {
+                    IsUpsert = true
+                };
             });
 
         await Collection.BulkWriteAsync(bulkModels, new BulkWriteOptions { IsOrdered = false }, cancellationToken);

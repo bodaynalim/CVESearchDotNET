@@ -22,7 +22,7 @@ public class VulnerabilitiesProfile : Profile
 
         CreateMap<CveMongoModel, CveViewModel>()
              .ForMember(m => m.ReferencesUrls, s => s.MapFrom(m => m.References.Select(r => r.Url).ToArray()))
-             .ForMember(m => m.Cvss3, s => s.MapFrom(m => m.Cvss3.BaseScore == null && m.Cvss3.ImpactScore == null ? m.Cvss31 : m.Cvss3))
+             .ForMember(m => m.Cvss3, s => s.MapFrom((m, _) => m.Cvss3 != null && m.Cvss3.BaseScore != null ? m.Cvss3 : m.Cvss31))
              .ForMember(m => m.Cwes, s => s.MapFrom(m => m.Cwes.SelectMany(r => r.Cwes).ToArray()))
              .ForMember(m => m.VulnerableConfigurations, s => s.MapFrom(m => m.VulnerableConfigurations.Select(r => r.CpeUri).ToArray()));
     }
