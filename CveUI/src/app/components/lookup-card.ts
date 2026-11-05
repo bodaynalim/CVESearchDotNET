@@ -3,8 +3,12 @@ import { Router, RouterLink } from '@angular/router';
 import { CVE_ID_PATTERN, normalizeCveId } from '../core/cve-id';
 import { RecentLookups } from '../core/recent-lookups';
 
+/**
+ * CVE-ID quick lookup (with recent-lookup chips) shown above the CVE list.
+ */
 @Component({
   imports: [RouterLink],
+  selector: 'cveui-lookup-card',
   template: `
     <section class="mb-6 rounded-md border border-[var(--color-card-border)] bg-white shadow-sm">
       <div class="border-t-2 border-[var(--color-panel-accent)] px-5 py-4">
@@ -50,18 +54,11 @@ import { RecentLookups } from '../core/recent-lookups';
         } @else {
           <p class="mt-2 text-xs text-slate-500">Format: CVE-&lt;year&gt;-&lt;number&gt; — e.g. CVE-2018-0001</p>
         }
-        <p class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-          <span>or</span>
-          <a
-            routerLink="/cves"
-            class="font-medium text-[var(--color-brand)] hover:underline"
-          >Browse all CVEs</a>
-        </p>
       </div>
     </section>
   `,
 })
-export class SearchPage {
+export class LookupCard {
   private readonly router = inject(Router);
 
   protected readonly error = signal<string | null>(null);
