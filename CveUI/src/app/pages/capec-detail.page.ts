@@ -2,18 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { isApiNotFound } from '../core/api/api.http';
 import { CapecApi } from '../core/api/capec.api';
-import { normalizeCveId } from '../core/cve-id';
-
-export function parseCapecNumericId(value: string): number | null {
-  const match = /^(\d+)$/.exec(value);
-  return match ? Number.parseInt(match[1], 10) : null;
-}
-
-/** "CWE-79" → "79"; other markers (e.g. "NVD-CWE-noinfo") have no page → null. */
-export function cweRouteParam(cweEntry: string): string | null {
-  const match = /^CWE-(\d+)$/i.exec(cweEntry.trim());
-  return match ? match[1] : null;
-}
+import { capecRouteParam, cweRouteParam, parseNumericId } from '../core/entry-ids';
 
 @Component({
   imports: [RouterLink],
@@ -85,6 +74,8 @@ export function cweRouteParam(cweEntry: string): string | null {
                     [routerLink]="['/cwe', numericId]"
                     class="font-mono text-xs font-medium text-[var(--color-brand)] hover:underline"
                   >{{ cweEntry }}</a>
+                } @else {
+                  <span class="font-mono text-xs text-slate-600">{{ cweEntry }}</span>
                 }
               }
             </div>
@@ -118,7 +109,7 @@ export class CapecDetailPage {
 
   private readonly capecApi = inject(CapecApi);
 
-  protected readonly parsedId = computed(() => parseCapecNumericId(normalizeCveId(this.id())));
+  protected readonly parsedId = computed(() => parseNumericId(this.id()));
 
   protected readonly invalidId = computed(() => this.parsedId() === null);
 
@@ -131,5 +122,5 @@ export class CapecDetailPage {
 
   // Exposed for the template's related-entry linking.
   protected readonly cweRouteParam = cweRouteParam;
-  protected readonly parseCapecId = (value: string): number | null => parseCapecNumericId(value);
+  protected readonly parseCapecId = capecRouteParam;
 }

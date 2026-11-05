@@ -1,21 +1,8 @@
-import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { isApiNotFound } from '../core/api/api.http';
 import { CweApi } from '../core/api/cwe.api';
-import { normalizeCveId } from '../core/cve-id';
-
-export function parseCweNumericId(value: string): number | null {
-  const match = /^(\d+)$/.exec(value);
-  return match ? Number.parseInt(match[1], 10) : null;
-}
-
-export function cweRouteParam(cweEntry: string): string | null {
-  // CVEs reference weaknesses as "CWE-<n>" (or occasionally non-numeric
-  // markers like "NVD-CWE-noinfo", which have no detail page).
-  const match = /^CWE-(\d+)$/i.exec(cweEntry.trim());
-  return match ? match[1] : null;
-}
+import { parseNumericId } from '../core/entry-ids';
 
 @Component({
   imports: [RouterLink],
@@ -31,7 +18,7 @@ export function cweRouteParam(cweEntry: string): string | null {
     } @else if (cwe.value(); as data) {
       <section class="rounded-md border border-[var(--color-card-border)] bg-white shadow-sm">
         <div class="border-t-2 border-[var(--color-panel-accent)] px-5 py-4">
-          <a routerLink="/" class="mb-4 inline-block text-sm text-[var(--color-brand)] hover:underline">← Home</a>
+          <a routerLink="/" class="inline-block text-sm text-[var(--color-brand)] hover:underline">← Home</a>
           <div class="mt-3 mb-1 flex flex-wrap items-baseline gap-x-3">
             <h3 class="font-mono text-lg font-semibold">CWE-{{ data.cweId }}</h3>
           </div>
@@ -48,7 +35,7 @@ export class CweDetailPage {
 
   private readonly cweApi = inject(CweApi);
 
-  protected readonly parsedId = computed(() => parseCweNumericId(normalizeCveId(this.id())));
+  protected readonly parsedId = computed(() => parseNumericId(this.id()));
 
   protected readonly invalidId = computed(() => this.parsedId() === null);
 

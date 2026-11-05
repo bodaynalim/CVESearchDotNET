@@ -42,4 +42,30 @@ describe('CapecDetailPage (routed through the app shell)', () => {
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('CAPEC not found');
   });
+
+  it('renders related weaknesses as links, degrading non-linkable markers to text', async () => {
+    const { fixture, http, router } = await bootApp();
+
+    await router.navigateByUrl('/capec/92');
+    await settle();
+    http.expectOne('http://test-api/capec/92').flush({
+      name: 'Forced Integer Overflow',
+      capecId: '92',
+      summary: 'This attack forces an integer variable to go out of range.',
+      prerequisites: [],
+      solutions: [],
+      relatedCwes: ['190', 'NVD-CWE-noinfo'],
+      relatedCapecs: ['128'],
+      severity: 'High',
+      likelyhoodAttack: 'Low',
+      taxonomy: [],
+      executionFlowTypeAttacks: [],
+    });
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[href="/cwe/190"]')?.textContent).toContain('190');
+    expect(compiled.textContent).toContain('NVD-CWE-noinfo'); // degraded, not dropped
+    expect(compiled.querySelector('a[href="/capec/128"]')?.textContent).toContain('128');
+  });
 });
