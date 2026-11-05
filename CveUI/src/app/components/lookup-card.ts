@@ -52,7 +52,7 @@ import { RecentLookups } from '../core/recent-lookups';
         @if (error(); as message) {
           <p class="mt-2 text-xs text-red-600">{{ message }}</p>
         } @else {
-          <p class="mt-2 text-xs text-slate-500">Format: CVE-&lt;year&gt;-&lt;number&gt; — e.g. CVE-2018-0001</p>
+          <p class="mt-2 text-xs text-slate-500">Format: CVE-&lt;year&gt;-&lt;number&gt; &middot; e.g. CVE-2018-0001</p>
         }
       </div>
     </section>
