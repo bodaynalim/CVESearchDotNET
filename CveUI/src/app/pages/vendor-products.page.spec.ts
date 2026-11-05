@@ -11,7 +11,7 @@ describe('VendorProductsPage (routed through the app shell)', () => {
     await settle();
     http
       .expectOne('http://test-api/vendors/akamai%2Fzstd')
-      .flush({ Vendor: 'akamai/zstd', Softwares: ['keystone', 'wss'] });
+      .flush({ vendor: 'akamai/zstd', softwares: ['keystone', 'wss'] });
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;

@@ -44,15 +44,15 @@ describe('SearchPage (routed through the app shell)', () => {
 
 function sampleCve() {
   return {
-    CveId: 'CVE-2018-0001',
-    Assigner: 'certcc',
-    Published: '2018-01-12T00:00:00Z',
-    Modified: '2018-01-12T00:00:00Z',
-    Cwes: ['CWE-20'],
-    Summary: 'An issue was discovered in Product X.',
+    cveId: 'CVE-2018-0001',
+    assigner: 'certcc',
+    published: '2018-01-12T00:00:00Z',
+    modified: '2018-01-12T00:00:00Z',
+    cwes: ['CWE-20'],
+    summary: 'An issue was discovered in Product X.',
     Cvss2: null,
     Cvss3: { BaseScore: 5.3, VectorString: 'CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N' },
-    ReferencesUrls: ['https://example.com/advisory'],
-    VulnerableConfigurations: ['cpe:2.3:a:vendor:product:1.0:*:*:*:*:*:*:*:*'],
+    referencesUrls: ['https://example.com/advisory'],
+    vulnerableConfigurations: ['cpe:2.3:a:vendor:product:1.0:*:*:*:*:*:*:*:*'],
   };
 }

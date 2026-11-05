@@ -18,8 +18,8 @@ import { VendorsApi } from '../core/api/vendors.api';
           <p class="py-6 text-sm text-red-600">Failed to load products.</p>
         } @else if (products.value(); as data) {
           <div class="mt-3 mb-4 flex items-baseline gap-2">
-            <h3 class="text-base font-semibold">{{ data.Vendor }}</h3>
-            <span class="text-xs text-slate-500">({{ data.Softwares.length.toLocaleString() }} products)</span>
+            <h3 class="text-base font-semibold">{{ data.vendor }}</h3>
+            <span class="text-xs text-slate-500">({{ data.softwares.length.toLocaleString() }} products)</span>
           </div>
 
           <p class="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Filter products</p>
@@ -63,7 +63,7 @@ export class VendorProductsPage {
 
   protected readonly filtered = computed(() => {
     const needle = this.query().toLowerCase();
-    const softwares = this.products.value()?.Softwares ?? [];
+    const softwares = this.products.value()?.softwares ?? [];
     return needle ? softwares.filter(v => v.toLowerCase().includes(needle)) : softwares;
   });
 

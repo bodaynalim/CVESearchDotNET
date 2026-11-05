@@ -49,9 +49,13 @@ Base: `https://localhost:<api-port>` (config in `CveUI/src/environments/`).
 | `GET /capec/{capecId}` | `CapecViewModel` |
 
 ### `CveViewModel` fields the UI renders
-`CveId`, `Assigner`, `Published`, `Modified`, `Cwes[]`, `Summary`,
-`Cvss2` / `Cvss3` / `Cvss31` (each has `BaseScore` + vector), `ReferencesUrls[]`
-(Url, Name, Refsource), `VulnerableConfigurations[]` (CPE 2.3 URI strings).
+`cveId`, `assigner`, `published`, `modified`, `cwes[]`, `summary`,
+`cvss2` / `cvss3` (each has `baseScore` + vector), `referencesUrls[]`
+(Url, Name, Refsource), `vulnerableConfigurations[]` (CPE 2.3 URI strings).
+All JSON property names are **camelCase**: the API runs Newtonsoft JSON
+(`AddNewtonsoftJson()`), whose default camelCase contract resolver wins over
+the System.Text.Json options registered alongside it (verified against live
+endpoints on 2026-11-05).
 
 ## 4. Screens & Routes
 
