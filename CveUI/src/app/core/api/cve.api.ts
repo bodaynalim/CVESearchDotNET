@@ -32,10 +32,11 @@ export class CveApi {
     }));
   }
 
-  get(cveId: string): HttpResourceRef<CveViewModel | undefined> {
-    return createResource<CveViewModel>(this.#injector, () => ({
-      url: `/cve/${encodePathSegment(cveId)}`,
-    }));
+  get(cveIdGetter: () => string | undefined): HttpResourceRef<CveViewModel | undefined> {
+    return createResource<CveViewModel>(this.#injector, () => {
+      const cveId = cveIdGetter();
+      return cveId === undefined ? undefined : { url: `/cve/${encodePathSegment(cveId)}` };
+    });
   }
 
   lastPublished(vendor: string, product: string): HttpResourceRef<CveViewModel | undefined> {
