@@ -23,13 +23,29 @@ public class CweMongoService : BaseMongoService<CweMongoModel>, ICweMongoService
         if (items.Count == 0)
             return;
 
+        // A replacement document carrying a null `_id` would alter the immutable
+        // field on every update (bulk write error code 66). Pin each replacement
+        // to its existing document's `_id` first.
+        var cweIds = items.DistinctBy(s => s.CweId).Select(s => s.CweId).ToList();
+        var existingIds = await Collection
+            .Find(Builders<CweMongoModel>.Filter.In(c => c.CweId, cweIds))
+            .Project(s => new { s.CweId, s.Id })
+            .ToListAsync(cancellationToken);
+        var idByCweId = existingIds.ToDictionary(x => x.CweId, x => x.Id);
+
         var bulkModels = items
             .DistinctBy(s => s.CweId)
-            .Select(s => new ReplaceOneModel<CweMongoModel>(
-                Builders<CweMongoModel>.Filter.Eq(c => c.CweId, s.CweId),
-                s)
+            .Select(s =>
             {
-                IsUpsert = true
+                if (idByCweId.TryGetValue(s.CweId, out var id))
+                    s.Id = id;
+
+                return new ReplaceOneModel<CweMongoModel>(
+                    Builders<CweMongoModel>.Filter.Eq(c => c.CweId, s.CweId),
+                    s)
+                {
+                    IsUpsert = true
+                };
             });
 
         await Collection.BulkWriteAsync(bulkModels, new BulkWriteOptions { IsOrdered = false }, cancellationToken);

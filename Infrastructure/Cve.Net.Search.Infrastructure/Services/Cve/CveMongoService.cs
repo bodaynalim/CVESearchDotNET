@@ -1,4 +1,4 @@
-﻿using Cve.Application.Services;
+using Cve.Application.Services;
 using Cve.Infrastructure.Services;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;

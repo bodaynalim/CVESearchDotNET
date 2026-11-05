@@ -38,7 +38,9 @@ public class KeywordFilterBuilderTests
         var rendered = (BsonRegularExpression)Render(filter)["$or"][0]["CveId"];
         var pattern = rendered.Pattern;
         var options = rendered.Options;
-        var regex = new Regex(pattern, options == "i" ? RegexOptions.IgnoreCase : RegexOptions.None);        regex.IsMatch("CVE-2018-0001") /* unescaped pattern would match too */ .Should().BeFalse();
+        var regex = new Regex(pattern, options == "i" ? RegexOptions.IgnoreCase : RegexOptions.None);
+
+        regex.IsMatch("CVE-2018-0001") /* unescaped pattern would match too */ .Should().BeFalse();
 
         // "c" followed by ".((v*" as literal text must match the escaped pattern:
         regex.IsMatch("ac.((v*zz").Should().BeTrue();

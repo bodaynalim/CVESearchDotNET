@@ -85,7 +85,8 @@ export class CveApi {
     });
   }
 
-  get(cveIdGetter: () => string | undefined): HttpResourceRef<CveViewModel | undefined> {    return createResource<CveViewModel>(this.#injector, () => {
+  get(cveIdGetter: () => string | undefined): HttpResourceRef<CveViewModel | undefined> {
+    return createResource<CveViewModel>(this.#injector, () => {
       const cveId = cveIdGetter();
       return cveId === undefined ? undefined : { url: `/cve/${encodePathSegment(cveId)}` };
     });
