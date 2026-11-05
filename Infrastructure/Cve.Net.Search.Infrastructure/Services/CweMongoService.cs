@@ -1,5 +1,6 @@
 using Cve.Application.Services;
 using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,8 +38,9 @@ public class CweMongoService : BaseMongoService<CweMongoModel>, ICweMongoService
             .DistinctBy(s => s.CweId)
             .Select(s =>
             {
-                if (idByCweId.TryGetValue(s.CweId, out var id))
-                    s.Id = id;
+                s.Id = idByCweId.TryGetValue(s.CweId, out var id)
+                    ? id
+                    : ObjectId.GenerateNewId().ToString();
 
                 return new ReplaceOneModel<CweMongoModel>(
                     Builders<CweMongoModel>.Filter.Eq(c => c.CweId, s.CweId),

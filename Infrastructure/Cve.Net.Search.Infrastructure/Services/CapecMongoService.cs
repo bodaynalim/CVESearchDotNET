@@ -1,5 +1,6 @@
 using Cve.Application.Services;
 using Cve.Net.Search.Domain.Database.MongoModels.Capec;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,8 +39,9 @@ public class CapecMongoService : BaseMongoService<CapecMongoModel>, ICapecMongoS
             .DistinctBy(s => s.CapecId)
             .Select(s =>
             {
-                if (idByCapecId.TryGetValue(s.CapecId, out var id))
-                    s.Id = id;
+                s.Id = idByCapecId.TryGetValue(s.CapecId, out var id)
+                    ? id
+                    : ObjectId.GenerateNewId().ToString();
 
                 return new ReplaceOneModel<CapecMongoModel>(
                     Builders<CapecMongoModel>.Filter.Eq(c => c.CapecId, s.CapecId),

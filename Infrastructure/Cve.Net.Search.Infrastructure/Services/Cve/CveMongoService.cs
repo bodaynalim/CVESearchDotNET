@@ -2,6 +2,7 @@ using Cve.Application.Services;
 using Cve.Infrastructure.Services;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,16 +71,13 @@ public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
         if (items.Count == 0)
             return;
 
-        // A replacement document carrying a null `_id` would fail every
-        // upsert path with an immutable-field or duplicate-key error. Pin
-        // each replacement to its existing document's `_id` first; genuinely
-        // new CVEs get the driver-generated `_id`.
+        // A replacement document carrying a null `_id` fails every upsert
+        // path: updates hit the immutable-field error, inserts hit the
+        // duplicate-key error. Pin each replacement to its existing
+        // document's `_id`; genuinely new CVEs get a fresh ObjectId.
         var existingIds = await GetExistingCveIds(items.Select(s => s.CveId), cancellationToken);
-        var existingIdSet = existingIds.ToHashSet();
-        // The documents are keyed by CveId (unique index), so only documents
-        // already present need their _id carried over.
         var existing = await Collection
-            .Find(Builders<CveMongoModel>.Filter.In(c => c.CveId, existingIdSet))
+            .Find(Builders<CveMongoModel>.Filter.In(c => c.CveId, existingIds))
             .Project(s => new { s.CveId, s.Id })
             .ToListAsync(cancellationToken);
         var idByCveId = existing.ToDictionary(x => x.CveId, x => x.Id);
@@ -88,8 +86,9 @@ public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
             .DistinctBy(s => s.CveId)
             .Select(s =>
             {
-                if (idByCveId.TryGetValue(s.CveId, out var id))
-                    s.Id = id;
+                s.Id = idByCveId.TryGetValue(s.CveId, out var id)
+                    ? id
+                    : ObjectId.GenerateNewId().ToString();
 
                 return new ReplaceOneModel<CveMongoModel>(
                     Builders<CveMongoModel>.Filter.Eq(c => c.CveId, s.CveId),
