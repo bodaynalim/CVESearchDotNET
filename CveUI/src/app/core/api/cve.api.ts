@@ -17,19 +17,37 @@ export interface CveSearchParams {
 export class CveApi {
   readonly #injector = inject(Injector);
 
-  searchByProduct(params: CveSearchParams): HttpResourceRef<CveViewModel[] | undefined> {
-    const { vendor, product, count, page, descending, byPublished } = params;
-    // The backend validates count/page range (>= 1) and answers 400 on
-    // invalid values, which pages surface via error().
-    return createResource<CveViewModel[]>(this.#injector, () => ({
-      url: `/cve/search/${encodePathSegment(vendor)}/${encodePathSegment(product)}/${count}/${page}/${descending}/${byPublished}`,
-    }));
+  /**
+   * Paginated vendor+product CVE search. The params getter may return
+   * undefined to idle the resource (e.g. until a vendor/product is known).
+   * The backend validates count/page range (>= 1) with a 400; the page layer
+   * is responsible for sending well-formed values.
+   */
+  searchByProduct(
+    paramsGetter: () => CveSearchParams | undefined,
+  ): HttpResourceRef<CveViewModel[] | undefined> {
+    return createResource<CveViewModel[]>(this.#injector, () => {
+      const { vendor, product, count, page, descending, byPublished } = paramsGetter() ?? {};
+      if (vendor === undefined || product === undefined) return undefined;
+      return {
+        url: `/cve/search/${encodePathSegment(vendor)}/${encodePathSegment(product)}/${count}/${page}/${descending}/${byPublished}`,
+      };
+    });
   }
 
-  searchCount(vendor: string, product: string): HttpResourceRef<CveSearchCount | undefined> {
-    return createResource<CveSearchCount>(this.#injector, () => ({
-      url: `/cve/search/${encodePathSegment(vendor)}/${encodePathSegment(product)}/count`,
-    }));
+  /** Total matched CVEs for a vendor+product pair; refetches when either changes. */
+  searchCount(
+    vendorGetter: () => string | undefined,
+    productGetter: () => string | undefined,
+  ): HttpResourceRef<CveSearchCount | undefined> {
+    return createResource<CveSearchCount>(this.#injector, () => {
+      const vendor = vendorGetter();
+      const product = productGetter();
+      if (vendor === undefined || product === undefined) return undefined;
+      return {
+        url: `/cve/search/${encodePathSegment(vendor)}/${encodePathSegment(product)}/count`,
+      };
+    });
   }
 
   get(cveIdGetter: () => string | undefined): HttpResourceRef<CveViewModel | undefined> {

@@ -31,19 +31,22 @@ describe('VendorProductsPage (routed through the app shell)', () => {
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).not.toContain('CVE list target');
+    expect(compiled.textContent).not.toContain('Selected product');
 
     const chip = Array.from(compiled.querySelectorAll('button')).find(b => b.textContent!.includes('keystone'))!;
     chip.click();
     await fixture.whenStable();
-    expect(compiled.textContent).toContain('CVE list target');
-    expect(compiled.textContent).toContain('akamai / keystone');
+    expect(compiled.textContent).toContain('Selected product');
+    expect(compiled.textContent).toContain('keystone');
+    const browseLink = compiled.querySelector<HTMLAnchorElement>('a[href*="/cves?"]')!;
+    expect(browseLink).toBeTruthy();
+    expect(browseLink.getAttribute('href')).toContain('vendor=akamai');
 
     // Clicking again deselects.
     const chipAgain = Array.from(compiled.querySelectorAll('button')).find(b => b.textContent!.includes('keystone'))!;
     chipAgain.click();
     await fixture.whenStable();
-    expect(compiled.textContent).not.toContain('CVE list target');
+    expect(compiled.textContent).not.toContain('Selected product');
   });
 
   it('shows a vendor-not-found state on HTTP 404', async () => {

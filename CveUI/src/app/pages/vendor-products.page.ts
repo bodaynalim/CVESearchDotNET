@@ -54,12 +54,18 @@ import { VendorsApi } from '../core/api/vendors.api';
           </ul>
 
           @if (selected(); as product) {
-            <div class="mt-4 flex items-center gap-3 rounded border border-[var(--color-brand)]/30 bg-[var(--color-brand)]/5 px-4 py-3">
+            <div class="mt-4 flex flex-wrap items-center gap-3 rounded border border-[var(--color-brand)]/30 bg-[var(--color-brand)]/5 px-4 py-3">
               <p class="text-sm">
-                CVE list target:
-                <span class="font-mono text-xs text-[var(--color-brand)]">{{ data.vendor }} / {{ product }}</span>
+                Selected product:
+                <span class="font-mono text-xs text-[var(--color-brand)]">{{ product }}</span>
               </p>
-              <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">CVE list opens here in the next slice</span>
+              <a
+                [routerLink]="['/cves']"
+                [queryParams]="{ vendor: data.vendor, product: product }"
+                class="rounded bg-[var(--color-brand)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--color-brand-hover)]"
+              >
+                Browse CVEs →
+              </a>
             </div>
           }
         }
