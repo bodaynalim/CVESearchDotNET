@@ -1,98 +1,34 @@
-# C# / .NET Project Engineering Guidelines for AI Agent
+# Engineering Guidelines for AI Agents
 
-You are acting as a Senior C# / .NET Software Engineer. When generating, refactoring, or reviewing code in this repository, strictly adhere to the following principles and conventions.
+You are acting as a Senior C# / .NET Software Engineer. This file covers **agent workflow and environment caveats only**. How code must be written is defined in [`docs/CODING_STANDARDS.md`](docs/CODING_STANDARDS.md) — always read and follow it first; it is the authoritative, repo-specific standard that code review enforces.
 
-## 0. Filesystem Search Caveats
+## 1. Authoritative documents (read before acting)
 
-* **Dot-directories are hidden from glob/grep tools** (e.g., `.opencode/`, `.github/`, `.vs/`).
-  * Glob patterns like `.opencode/**` may return "No files found" even when the directory exists.
-  * Before concluding a dot-directory or its files do not exist, verify with `Get-ChildItem -Force` (PowerShell) or a directory read.
+- [`docs/CODING_STANDARDS.md`](docs/CODING_STANDARDS.md) — coding standard for the .NET API projects (layering, REST contract, Mongo rules, testing).
+- [`AGENTS.md`](AGENTS.md) — this file (agent workflow).
+- [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md) → [`GLOSSARY.md`](GLOSSARY.md) (API domain terms) and [`CveUI/GLOSSARY.md`](CveUI/GLOSSARY.md) (UI terms) — use the canonical vocabulary; write new settled terms in immediately, not later.
+- `docs/adr/*.md` — architectural decisions (camelCase wire contract, keyword search semantics). Changing a recorded decision requires updating its ADR, not bypassing it.
+- `CveUI/` has its own conventions; when editing it, consult `CveUI/GLOSSARY.md` and the UI test seam norms established by `CveUI/src/app/testing/boot-app.ts`.
 
----
+## 2. Filesystem search caveats (hard)
 
-## 1. Core Architectural & Design Principles
+- **Dot-directories are hidden from glob/grep tools** (e.g. `.opencode/`, `.github/`, `.vs/`). A glob like `.opencode/**` may return "No files found" even when the directory exists. Before concluding a dot-directory or its files do not exist, verify with `Get-ChildItem -Force` (PowerShell) or a directory read.
+- The MongoDB delta jobs regenerate data; never treat database state as a fixture.
 
-* **KISS (Keep It Simple, Stupid):** 
-  * Prefer simple, readable logic over clever or overly abstract code.
-  * Do not create premature abstractions, generic wrappers, or speculative interfaces unless explicitly required.
-* **DRY (Don't Repeat Yourself):** 
-  * Extract repeated business logic into dedicated reusable domain/application services.
-  * *Note:* Do NOT compromise readability or introduce tight coupling across independent modules just to eliminate minor duplication.
-* **YAGNI (You Aren't Gonna Need It):** 
-  * Write code only for the immediate requirement. Do not add unused parameters, extension points, or dead code paths.
-* **SOLID Principles:**
-  * **SRP:** One class should have one reason to change. Separate request parsing, validation, core execution, and persistence.
-  * **OCP:** Extend functionality via composition, strategy patterns, or middleware instead of modifying monolithic `switch` statements.
-  * **LSP:** Derived types must be fully substitutable for their base types without changing program correctness.
-  * **ISP:** Prefer small, highly focused interfaces (e.g., `IOrderRepository`, `IPriceCalculator`) rather than bloated "God" interfaces.
-  * **DIP:** Depend on abstractions (interfaces), not concrete implementations. High-level modules must not depend on low-level modules.
+## 3. Environment notes
 
----
+- The API runs at `http://localhost:5254` (launchSettings); Hangfire dashboard at `/hangfire` with basic auth from `appsettings.Development.json`.
+- Long-running servers (API, Angular dev server) are background processes: restart **and rebuild** the API after changing backend code — editing only the database-visible state does nothing to the running binary. Watch out for DLL lock contention while the API is running (`MSB3027`): stop the process, build/test, restart.
+- Windows PowerShell quirks worth remembering:
+  - `npm.ps1` may be blocked — use `npm.cmd`.
+  - `Get-Content`/`Set-Content` without an encoding argument mangles UTF-8 on this machine (CP1251 mojibake) — use explicit encodings or a byte-safe tool for any file containing non-ASCII text.
 
-## 2. C# Language & Standard Practices
+## 4. Working discipline
 
-* **C# Version & Syntax:** Use modern C# features (C# 10/11/12+):
-  * Use **Primary Constructors** for class dependency injection where clean.
-  * Use **Pattern Matching** (`switch` expressions, relational patterns) instead of nested `if-else`.
-  * Use **File-Scoped Namespaces** (`namespace MyProject.Features;`).
-  * Use **Records** (`record` / `readonly record struct`) for immutable Data Transfer Objects (DTOs), events, and commands.
-* **Nullability:**
-  * Nullable reference types (`<Nullable>enable</Nullable>`) are enforced.
-  * Handle potential nulls explicitly using pattern matching, null-coalescing (`??`), or guard clauses. Avoid using `!` (null-forgiving operator) unless strictly necessary and documented.
-* **Asynchronous Programming (`async`/`await`):**
-  * Always use `async`/`await` end-to-end. Never use `.Result`, `.Wait()`, or `.GetAwaiter().GetResult()` (prevents threadpool starvation/deadlocks).
-  * Pass `CancellationToken` to all asynchronous operations (DB queries, HTTP requests, I/O).
-  * Use `ValueTask` / `ValueTask<T>` ONLY for high-throughput hot paths where operations frequently complete synchronously. Use `Task` by default.
+- Fetch the ticket from the tracker and state its title before starting; implement → validate (typecheck, affected suites first, full suites at the end) → two-axis review (standards per `docs/CODING_STANDARDS.md` + spec) → commit (message references the ticket number).
+- Fact-finding is your job: explore the codebase before asking the user anything you can look up. Decisions are the user's.
+- Reported bugs get a root-cause fix at the right layer, not a symptom patch; where the fixed logic is pure, add a regression test the same day.
 
----
+## 5. Sanctioned consulting shortcuts you may not take
 
-## 3. Layering & Clean Code Structure
-
-* **Domain & Business Logic:**
-  * Keep the Domain layer free from external dependencies (no UI, HTTP, or direct ORM leakages).
-  * Enforce invariants inside Entity/Aggregate roots using explicit validation or Domain Exceptions.
-* **Error Handling:**
-  * Avoid using Exceptions for expected control flow (e.g., validation errors). Use a **Result pattern** (e.g., `Result<T>`, `OneOf`, or `FluentResults`) for predictable domain outcomes.
-  * Use standard custom Domain Exceptions only for truly exceptional/unexpected states.
-  * Catch specific exceptions at the boundary level (API Controllers/Middleware) and map them to standard Problem Details (RFC 7807).
-* **Dependency Injection:**
-  * Use standard Microsoft DI (`IServiceCollection`).
-  * Prefer `Scoped` lifetime for database contexts and unit-of-work services.
-  * Use `Transient` for lightweight stateless handlers/calculators.
-  * Use `Singleton` strictly for thread-safe stateful services or caches.
-
----
-
-## 4. Performance & Database Access (MongoDB)
-
-* **MongoDB Driver:**
-  * Use `IMongoCollection<T>` via dependency injection (Singleton lifetime is correct — `MongoClient` is thread-safe and stateless).
-  * Always use `.Find()` / `.Aggregate()` with explicit field projections (`.Project<T>()`) instead of returning full documents when only a subset of fields is needed.
-  * Avoid N+1 query problems: use `$lookup` aggregation or batch queries instead of fetching related data in loops.
-  * Create and maintain proper indexes — define them in service constructors or migration scripts.
-* **Async Operations:**
-  * Always use async methods (`FindAsync`, `InsertOneAsync`, `UpdateOneAsync`, `DeleteOneAsync`, etc.) with `CancellationToken`.
-  * Do not use synchronous MongoDB driver methods in web request paths.
-* **Resource Management:**
-  * Ensure all `IDisposable` and `IAsyncDisposable` objects (streams, HTTP clients) are managed via `using` statements or DI.
-
----
-
-## 5. Code Style & Formatting Guidelines
-
-* **Naming Conventions:**
-  * `PascalCase` for classes, interfaces, records, methods, public properties, and constants.
-  * `camelCase` for local variables and method parameters.
-  * `_camelCase` with a leading underscore for private fields.
-  * Interface names MUST start with `I` (e.g., `IWorkoutRepository`).
-* **Clean Code Aesthetics:**
-  * Avoid deep nesting (maximum 2-3 levels). Use **Guard Clauses** and early returns (`return`, `break`, `continue`).
-  * Keep methods short and focused (ideally under 20-30 lines).
-
----
-
-## 6. Testing Expectations
-
-* When writing or updating features, provide corresponding **Unit Tests** (xUnit/NUnit + FluentAssertions + Moq/NSubstitute).
-* Tests must follow the **AAA Pattern** (Arrange, Act, Assert).
-* Test method naming convention: `UnitOfWork_StateUnderTest_ExpectedBehavior` (e.g., `CalculateTotal_WithValidCoupon_ReturnsDiscountedPrice`).
+When unsure, prefer reading these files over guessing: `Web/Cve.Net.Search.Web/Program.cs` (DI wiring), `Infrastructure/.../AutoMapper/VulnerabilitiesProfile.cs` (model mapping rules), `Web/.../Controllers/*` (route style), `Tests/Cve.Net.Search.Tests/*` (test style). Do not invent endpoints, columns, or conventions that don't exist — verify against code first.

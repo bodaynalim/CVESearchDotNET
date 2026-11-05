@@ -35,47 +35,68 @@ These standards apply to the C#/.NET projects in this repository (Application, D
 
 ## 4. C# language & syntax
 
-- Modern C# preferred: file-scoped namespaces, records for immutable DTOs/ViewModels, switch expressions, pattern matching.
+- Modern C# preferred: file-scoped namespaces, records for immutable DTOs/ViewModels, switch expressions, relational pattern matching instead of nested `if-else` cascades.
+- Primary constructors are allowed for DI-injected classes where they stay readable.
 - Nullable reference types enforced: guard clauses > `?.` suppression > `!` (only with a comment justifying it).
 - `async`/`await` end to end (hard): no `.Result`, `.Wait()`, `.GetAwaiter().GetResult()`. Pass `CancellationToken` to every I/O call, including Mongo driver calls.
-- Lambdas in AutoMapper/query-trees cannot contain `?.` (expression trees) — stabilize with an explicit null check instead.
+- `ValueTask`/`ValueTask<T>` only on hot paths that usually complete synchronously; default to `Task`.
 
-## 5. MongoDB access rules
+## 4a. Style rules (hard)
+
+- Naming: PascalCase classes/records/interfaces (`I` prefix)/methods/public members/constants; camelCase locals and parameters; `_camelCase` leading underscore for private fields.
+- Guard clauses and early returns; maximum nesting depth 2–3 levels.
+- Methods short and focused (ideally under 20–30 lines); one class per file; file-scoped namespaces.
+
+## 5. Dependency Injection (hard)
+
+- Standard Microsoft DI only (`IServiceCollection`), wired in `Web/Cve.Net.Search.Web/Program.cs`.
+- `Singleton` for stateless, thread-safe services — **all Mongo services and `MongoClient`-backed types are registered Singleton** (the client is thread-safe; per-request construction is wasted work).
+- `Scoped`/`Transient` only where per-request state genuinely exists (this codebase currently has none of the data-store kind; don't add one reflexively).
+
+## 5a. Resource management
+
+- Every `IDisposable`/`IAsyncDisposable` (streams, HTTP responses, Mongo clients in scripts) via `using`/`await using` or DI-managed lifetimes; the import helpers dispose download/extract streams explicitly.
+- `IHttpClientFactory`-produced clients are used per-operation; never hold long-lived `HttpClient` instances of your own.
+
+## 6. MongoDB access rules
 
 - Injectable `IMongoCollection<T>`-rooted services; **Singleton lifetime is correct** (client is thread-safe).
 - Filter, sort, skip/limit through the builder API; **no N+1** loops — batch fetches or aggregations instead.
+- Indexes are created and maintained in the services' `EnsureIndexesAsync` (`IndexBootstrapper` runs them at startup) — when you add a queryable field to a hot filter, add the matching index there.
 - Prefer server-side filters (`CountDocumentsAsync`, positional/regex filters). For deliberately small collections, an in-memory sort+page over pre-filtered results is permitted **only with a comment sizing the collection** (cf. `CweMongoService.GetCweList`, ~1.5k docs). Count routes must use `CountDocumentsAsync`, never materialize documents.
 - **Bulk upserts must never serialize `null` `_id`** (hard — bug of record): pin each replacement to its existing document's `_id`, or assign `ObjectId.GenerateNewId().ToString()` for genuinely new documents. Replacement documents with null `_id` hit the immutable-field error on update and duplicate-key E11000 on insert.
 - Filters for keyword/listings come from the shared `KeywordFilterBuilder` (regex-escaped, case-insensitive `$or`) — do not hand-roll another regex builder.
-- Async driver methods only, with cancellation tokens.
+- Async driver methods only, with cancellation tokens; projection (`.Project<T>()`) whenever only a subset of fields is needed.
 
-## 6. Error handling
+## 7. Error handling
 
-- Expected conditions (validation, not-found) return status codes via controllers, not exceptions.
-- Checker `NotFound` must include a human-meaningful message ("CWE-{id} is not found").
-- Use the Result-style of a boolean/`null` return from the service layer for predictable misses; throw only for truly unexpected states.
+- Expected conditions (validation, not-found) return status codes via controllers, not exceptions; the repo does **not** use a Result library or RFC 7807 Problem Details middleware.
+- `NotFound` responses include a human-meaningful message ("CWE-{id} is not found"); 400s surface route-validation failures.
+- Return `null`/boolean/plain objects from the service layer for predictable misses; throw only for truly unexpected states.
+- Lambda expressions feeding AutoMapper/query trees cannot contain `?.` (expression trees) — use an explicit null check instead (cf. the CVSS fallback in `VulnerabilitiesProfile`).
 
-## 7. Naming & layout
+## 8. Naming & layout
 
 - PascalCase for classes, records, interfaces (prefixed `I`), methods, public members, and constants.
 - camelCase for locals and parameters.
+- `_camelCase` leading underscore for private fields.
 - Interfaces for DI-registered services live in Application; implementations in Infrastructure with matching names (`ICweMongoService` → `CweMongoService`).
 - One class per file; file-scoped namespaces; regions (`#region Private`) allowed only for non-trivial helper grouping.
-- Comments state the **why** (constraints, bug history in ADR references), never the **what**.
+- Comments state the **why** (constraints, bug history, ADR references), never the **what**.
 
-## 8. Testing
+## 9. Testing
 
-- xUnit + FluentAssertions + NSubstitute (project `Tests/Cve.Net.Search.Tests`).
+- xUnit + FluentAssertions + NSubstitute (project `Tests/Cve.Net.Search.Tests`) — no NUnit, no Moq.
 - Test at a pure/judicious seam, not at Mongo-implementation detail:
   - pure logic (filter builders, mapper decisions) — direct unit tests;
   - import helpers — stub the HTTP seam (`StubHttpHandler`) and Mongo services.
-- AAA + `Method_Scenario_Expected` naming.
+- AAA + `Type_Scenario_Expected` naming (e.g. `Cve_WithOnlyCvss31_FallsBackToCvss31InViewModel`).
 - Keeping existing tests green is mandatory; the database is not a test fixture.
 - **Documented bug fixes get a regression test where the logic is pure** (cf. `CveMappingTests` guarding the CVSS3/3.1 fallback).
 
-## 9. Definitions of done
+## 10. Definition of done
 
 - Builds with zero errors; existing suites green.
-- New public surface documented (XML comments) and followed to the REST conventions above.
+- New public surface documented (XML comments) and following the REST conventions above.
 - Linked GitHub ticket referenced in the commit message; review pass (two-axis or subagent template) before commit.
 - Domain vocabulary/decisions made in passing belong in `GLOSSARY*.md` / `docs/adr/` immediately, not later.
