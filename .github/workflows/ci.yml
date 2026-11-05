@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: backend tests
+        run: dotnet test Tests/Cve.Net.Search.Tests --nologo
+
+  cveui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CveUI
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: CveUI/package-lock.json
+      - run: npm ci
+      - name: typecheck
+        run: npx tsc --noEmit -p tsconfig.spec.json
+      - name: frontend tests
+        run: npm test
+      - name: production build
+        run: npm run build
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: doc links resolve
+        run: node scripts/check-docs.js
