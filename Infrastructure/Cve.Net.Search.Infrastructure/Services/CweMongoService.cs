@@ -6,12 +6,33 @@ using System.Threading.Tasks;
 
 namespace Cve.Infrastructure.Services;
 
-public class CweMongoService : BaseMongoService<CweMongoModel>, ICweMongoService
+public class CweMongoService : BaseMongoService<CweMongoModel>, ICweMongoService, IIndexInitializer
 {
     public CweMongoService(IMongoDatabase db) : base(db, "Cwes")
     {
-        Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Ascending(c => c.CweId), new CreateIndexOptions { Unique = true}));
-        Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Descending(c => c.RelatedCwes)));
+    }
+
+    public async Task EnsureIndexesAsync(CancellationToken cancellationToken = default)
+    {
+        await Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Ascending(c => c.CweId), new CreateIndexOptions { Unique = true }), cancellationToken: cancellationToken);
+        await Collection.Indexes.CreateOneAsync(new CreateIndexModel<CweMongoModel>(Builders<CweMongoModel>.IndexKeys.Descending(c => c.RelatedCwes)), cancellationToken: cancellationToken);
+    }
+
+    public async Task CreateOrUpdateExisting(IList<CweMongoModel> items, CancellationToken cancellationToken = default)
+    {
+        if (items.Count == 0)
+            return;
+
+        var bulkModels = items
+            .DistinctBy(s => s.CweId)
+            .Select(s => new ReplaceOneModel<CweMongoModel>(
+                Builders<CweMongoModel>.Filter.Eq(c => c.CweId, s.CweId),
+                s)
+            {
+                IsUpsert = true
+            });
+
+        await Collection.BulkWriteAsync(bulkModels, new BulkWriteOptions { IsOrdered = false }, cancellationToken);
     }
 
     public override async Task<CweMongoModel> CreateOrUpdateExisting(CweMongoModel item, CancellationToken cancellationToken = default)

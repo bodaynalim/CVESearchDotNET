@@ -1,5 +1,6 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Cve.Application.Helpers;
+using Cve.Infrastructure.Services.InitialImport;
 using Cve.Application.Services;
 using Cve.Infrastructure.AutoMapper;
 using Cve.Infrastructure.Extensions;
@@ -49,7 +50,9 @@ public class Program
 
         builder.Services.AddHangfire(config =>
         {
-            config.UseMemoryStorage();
+            // FetchNextJobTimeout must exceed the longest job (initial DB population takes hours):
+            // default 30 minutes causes Hangfire to re-fetch the job and abort the running execution.
+            config.UseMemoryStorage(HangfireStorageOptionsFactory.CreateMemoryStorageOptions());
         });
 
         builder.Services.AddHangfireServer(options =>
@@ -66,6 +69,15 @@ public class Program
         builder.Services.AddSingleton<ICveMongoService, CveMongoService>();
         builder.Services.AddSingleton<ICapecMongoService, CapecMongoService>();
         builder.Services.AddSingleton<IVendorMongoService, VendorMongoService>();
+        builder.Services.AddSingleton<ICveModifiedMongoService, CveModifiedMongoService>();
+        builder.Services.AddSingleton<Cve.Application.Helpers.IInitialImportStateService, InitialImportStateService>();
+        builder.Services.AddSingleton<IIndexInitializer>(serviceProvider => serviceProvider.GetRequiredService<ICveMongoService>());
+        builder.Services.AddSingleton<IIndexInitializer>(serviceProvider => serviceProvider.GetRequiredService<ICweMongoService>());
+        builder.Services.AddSingleton<IIndexInitializer>(serviceProvider => serviceProvider.GetRequiredService<ICapecMongoService>());
+        builder.Services.AddSingleton<IIndexInitializer>(serviceProvider => serviceProvider.GetRequiredService<IVendorMongoService>());
+        builder.Services.AddSingleton<IIndexInitializer>(serviceProvider => serviceProvider.GetRequiredService<ICveModifiedMongoService>());
+        builder.Services.AddSingleton<IIndexInitializer>(serviceProvider => serviceProvider.GetRequiredService<Cve.Application.Helpers.IInitialImportStateService>());
+        builder.Services.AddHostedService<IndexBootstrapper>();
         builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
         builder.Services.AddAutoMapper(typeof(VulnerabilitiesProfile));
         builder.Services.AddHealthChecks();
@@ -134,11 +146,7 @@ public class Program
         };
 
         app.UseHangfireDashboard("/hangfire", options);
-
         BackgroundJob.Enqueue<IVulnerabilitiesJsonHelper>(job => job.PopulateDatabaseInitially(CancellationToken.None));
-
-        RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(nameof(IVulnerabilitiesJsonHelper.PopulateDatabaseInitially),
-            job => job.PopulateDatabaseInitially(CancellationToken.None), Cron.Never);
 
         RecurringJob.AddOrUpdate<IVulnerabilitiesJsonHelper>(nameof(IVulnerabilitiesJsonHelper.LoadNewAndModifiedPerHourCves),
             job => job.LoadNewAndModifiedPerHourCves(CancellationToken.None), "0 * * * *");

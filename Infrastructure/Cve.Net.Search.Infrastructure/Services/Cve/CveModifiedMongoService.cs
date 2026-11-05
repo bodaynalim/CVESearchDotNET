@@ -1,3 +1,4 @@
+using Cve.Application.Services;
 using Cve.Infrastructure.Extensions;
 using Cve.Infrastructure.Services;
 using Cve.Net.Search.Application.Services.Cve;
@@ -12,17 +13,21 @@ using System.Threading.Tasks;
 
 namespace Cve.Net.Search.Infrastructure.Services.Cve;
 
-public class CveModifiedMongoService : BaseMongoService<CveModifiedMongoModel>, ICveModifiedMongoService
+public class CveModifiedMongoService : BaseMongoService<CveModifiedMongoModel>, ICveModifiedMongoService, IIndexInitializer
 {
     public CveModifiedMongoService(IMongoDatabase db) : base(db, "CvesModified")
     {
-        Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveModifiedMongoModel>(Builders<CveModifiedMongoModel>
-            .IndexKeys
-            .Ascending(c => c.CveId)));
+    }
 
-       Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveModifiedMongoModel>(Builders<CveModifiedMongoModel>
-           .IndexKeys
-           .Descending(c => c.Modified)));
+    public async Task EnsureIndexesAsync(CancellationToken cancellationToken = default)
+    {
+        await Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveModifiedMongoModel>(Builders<CveModifiedMongoModel>
+            .IndexKeys
+            .Ascending(c => c.CveId)), cancellationToken: cancellationToken);
+
+        await Collection.Indexes.CreateOneAsync(new CreateIndexModel<CveModifiedMongoModel>(Builders<CveModifiedMongoModel>
+            .IndexKeys
+            .Descending(c => c.Modified)), cancellationToken: cancellationToken);
     }
 
     public override async Task<CveModifiedMongoModel> CreateOrUpdateExisting(CveModifiedMongoModel item, CancellationToken cancellationToken = default)

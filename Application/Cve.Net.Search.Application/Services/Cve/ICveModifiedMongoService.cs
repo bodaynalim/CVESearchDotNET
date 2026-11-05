@@ -3,7 +3,7 @@ using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 
 namespace Cve.Net.Search.Application.Services.Cve;
 
-public interface ICveModifiedMongoService : IBaseMongoService<CveModifiedMongoModel>
+public interface ICveModifiedMongoService : IBaseMongoService<CveModifiedMongoModel>, IIndexInitializer
 {
     /// <summary>
     /// Log changes

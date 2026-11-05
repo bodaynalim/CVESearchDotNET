@@ -16,6 +16,17 @@ public interface IVulnerabilitiesJsonHelper
     Task PopulateDatabaseInitially(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Import the CVE year archive (part of the initial database population).
+    /// Runs as a separate chained job per year, so one year failing or rerunning
+    /// never affects the other years.
+    /// </summary>
+    /// <param name="year">Year archive to import, e.g. 2024</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [Mutex("InitialImportCvesYear-{0}")]
+    Task ImportCvesYear(int year, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Load published and modified per hour CVEs items
     /// </summary>
     /// <param name="cancellationToken"></param>
