@@ -83,4 +83,32 @@ public class CweMongoService : BaseMongoService<CweMongoModel>, ICweMongoService
     {
         return await Collection.Find(s => s.CweId == id).FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task<(IList<CweMongoModel> Items, long Total)> GetCweList(string? keyword, int count, int page, CancellationToken cancellationToken = default)
+    {
+        // The CWE enumeration is small (~1.5k docs), so matching + the
+        // numeric-ID sort can run in memory; the Mongo-side filter is still
+        // pushed down. Sort numerically: string IDs order lexicographically
+        // ("10000" < "1001" < "89") and would scramble the pages.
+        var filter = keyword == null
+            ? FilterDefinition<CweMongoModel>.Empty
+            : KeywordFilterBuilder.Build<CweMongoModel>(keyword, c => c.CweId, c => c.Name);
+
+        var all = await Collection.Find(filter).ToListAsync(cancellationToken);
+
+        var matched = all
+            .OrderBy(c => CweNumericId(c.CweId))
+            .Skip((page - 1) * count)
+            .Take(count)
+            .ToList();
+
+        return (matched, all.Count);
+    }
+
+    private static long CweNumericId(string? cweId)
+    {
+        // CWE ids are numeric strings; stray non-numeric forms sort last
+        // rather than throwing.
+        return long.TryParse(cweId, out var value) ? value : long.MaxValue;
+    }
 }

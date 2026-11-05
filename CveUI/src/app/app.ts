@@ -16,7 +16,13 @@ export class App {
   protected readonly sectionTitle = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map(event => (event.url.startsWith('/vendors') ? 'Vendors & Products' : 'Vulnerabilities')),
+      map(event =>
+        event.url.startsWith('/vendors')
+          ? 'Vendors & Products'
+          : event.url.startsWith('/cwe')
+            ? 'Weaknesses'
+            : 'Vulnerabilities',
+      ),
       startWith('Vulnerabilities'),
     ),
     { initialValue: 'Vulnerabilities' },

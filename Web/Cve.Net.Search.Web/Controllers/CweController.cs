@@ -3,6 +3,9 @@ using Cve.Application.Services;
 using Cve.Net.Search.Domain.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,6 +23,83 @@ public class CweController : Controller
     {
         _cweMongoService = cweMongoService;
         _mapper = mapper;
+    }
+
+    /// <summary>
+    /// Count all CWE entries
+    /// </summary>
+    [HttpGet("all/count")]
+    [ProducesResponseType(typeof(CweSearchCountViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CountAll(CancellationToken cancellationToken)
+    {
+        var (_, total) = await _cweMongoService.GetCweList(null, 1, 1, cancellationToken);
+
+        return Ok(new CweSearchCountViewModel { Total = total });
+    }
+
+    /// <summary>
+    /// List all CWE entries, paged in ascending numeric-ID order
+    /// </summary>
+    /// <param name="count">Count per page</param>
+    /// <param name="page">Page</param>
+    /// <returns></returns>
+    [HttpGet("all/{count}/{page}")]
+    [ProducesResponseType(typeof(IEnumerable<CweViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ListAll(
+        [FromRoute][Range(1, int.MaxValue)] int count,
+        [FromRoute][Range(1, int.MaxValue)] int page,
+        CancellationToken cancellationToken)
+    {
+        var (cwes, _) = await _cweMongoService.GetCweList(null, count, page, cancellationToken);
+
+        return Ok(cwes.Select(c => _mapper.Map<CweViewModel>(c)));
+    }
+
+    /// <summary>
+    /// Count CWE entries whose ID or name contains the keyword
+    /// </summary>
+    /// <param name="keyword">Search phrase (a "CWE-" prefix is ignored)</param>
+    [HttpGet("search-count/{keyword}")]
+    [ProducesResponseType(typeof(CweSearchCountViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CountByKeyword(
+        [FromRoute][Required][MinLength(1)] string keyword,
+        CancellationToken cancellationToken)
+    {
+        var (_, total) = await _cweMongoService.GetCweList(NormalizeKeyword(keyword), 1, 1, cancellationToken);
+
+        return Ok(new CweSearchCountViewModel { Total = total });
+    }
+
+    /// <summary>
+    /// List CWE entries whose ID or name contains the keyword (case-insensitive), paged
+    /// </summary>
+    /// <param name="keyword">Search phrase (a "CWE-" prefix is ignored)</param>
+    /// <param name="count">Count per page</param>
+    /// <param name="page">Page</param>
+    /// <returns></returns>
+    [HttpGet("search/{keyword}/{count}/{page}")]
+    [ProducesResponseType(typeof(IEnumerable<CweViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SearchByKeyword(
+        [FromRoute][Required][MinLength(1)] string keyword,
+        [FromRoute][Range(1, int.MaxValue)] int count,
+        [FromRoute][Range(1, int.MaxValue)] int page,
+        CancellationToken cancellationToken)
+    {
+        var (cwes, _) = await _cweMongoService.GetCweList(NormalizeKeyword(keyword), count, page, cancellationToken);
+
+        return Ok(cwes.Select(c => _mapper.Map<CweViewModel>(c)));
+    }
+
+    private static string NormalizeKeyword(string keyword)
+    {
+        var trimmed = keyword.Trim();
+        return trimmed.StartsWith("CWE-", StringComparison.OrdinalIgnoreCase)
+            ? trimmed[4..]
+            : trimmed;
     }
 
     /// <summary>

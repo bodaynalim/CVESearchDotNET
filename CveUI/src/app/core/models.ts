@@ -52,6 +52,10 @@ export interface CweViewModel {
   description: string;
 }
 
+export interface CweSearchCount {
+  total: number;
+}
+
 export interface CapecViewModel {
   name: string;
   capecId: string;

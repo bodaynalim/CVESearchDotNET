@@ -11,4 +11,16 @@ public interface ICweMongoService : IBaseMongoService<CweMongoModel>, IIndexInit
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task CreateOrUpdateExisting(IList<CweMongoModel> items, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Page of CWE entries in fixed ascending-numeric-ID order. A null
+    /// keyword lists all entries; otherwise entries whose ID or name
+    /// contains the keyword (case-insensitive) are matched.
+    /// </summary>
+    /// <param name="keyword">Search phrase or null</param>
+    /// <param name="count">Count</param>
+    /// <param name="page">Page</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<(IList<CweMongoModel> Items, long Total)> GetCweList(string? keyword, int count, int page, CancellationToken cancellationToken = default);
 }
