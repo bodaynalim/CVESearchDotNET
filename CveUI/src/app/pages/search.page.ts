@@ -1,9 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CVE_ID_PATTERN, normalizeCveId } from '../core/cve-id';
+import { RecentLookups } from '../core/recent-lookups';
 
 @Component({
-  imports: [],
+  imports: [RouterLink],
   template: `
     <section class="mb-6 rounded-md border border-[var(--color-card-border)] bg-white shadow-sm">
       <div class="border-t-2 border-[var(--color-panel-accent)] px-5 py-4">
@@ -24,6 +25,26 @@ import { CVE_ID_PATTERN, normalizeCveId } from '../core/cve-id';
             Open
           </button>
         </form>
+        @if (recentLookups.entries().length) {
+          <ul class="mt-4 flex flex-wrap items-center gap-2">
+            <li class="text-xs text-slate-500">Recent:</li>
+            @for (cveId of recentLookups.entries(); track cveId) {
+              <li>
+                <a
+                  [routerLink]="['/cves', cveId]"
+                  class="rounded-full bg-[var(--color-brand)]/10 px-3 py-1 font-mono text-xs font-medium text-[var(--color-brand)] hover:bg-[var(--color-brand)]/20"
+                >{{ cveId }}</a>
+              </li>
+            }
+            <li>
+              <button
+                type="button"
+                (click)="recentLookups.clear()"
+                class="text-xs text-slate-500 hover:text-red-600"
+              >Clear</button>
+            </li>
+          </ul>
+        }
         @if (error(); as message) {
           <p class="mt-2 text-xs text-red-600">{{ message }}</p>
         } @else {
@@ -37,6 +58,7 @@ export class SearchPage {
   private readonly router = inject(Router);
 
   protected readonly error = signal<string | null>(null);
+  protected readonly recentLookups = inject(RecentLookups);
 
   protected lookup(event: Event, rawValue: string): void {
     event.preventDefault();

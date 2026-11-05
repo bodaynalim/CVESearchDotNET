@@ -118,9 +118,9 @@ Prod origins to be appended by deployment; not hardcoded here.
 - No authentication in the UI (API endpoints are public).
 - No mobile/offline PWA.
 
-## 8. Open questions
+## 8. Open questions → resolutions
 
-1. Dev API port for the environment file — confirm once `launchSettings.json` is checked.
-2. CVSS threshold table — confirm matches the domain's severity convention.
-3. Should recent lookups / favorites persist cross-device (needs backend) or stay local-only (v1: local-only)?
-4. Product list per vendor can be very large (`VendorProductsViewModel` unpaginated) — propose simple client-side filter box; confirm acceptable.
+1. ~~Dev API port~~ — **Resolved**: `http://localhost:5254` (launchSettings `applicationUrl`), reflected in the Angular dev environment.
+2. ~~CVSS threshold table~~ — **Resolved** (ticket #9): backend ships severity strings (`CvssTwo.Severity` / `CvssThree.BaseSeverity`, NVD-imported); UI canonicalizes them and falls back to CVSS3 thresholds (None=0, Low<4, Medium<7, High<9, Critical≥9) or CVSS2 banding (no Critical tier) when the string is missing.
+3. ~~Recent lookups persistence~~ — **Resolved** (ticket #10): local-only via localStorage (`cveui.recentLookups`, capped at 5); no backend changes.
+4. ~~Vendor product list size~~ — **Resolved** (ticket #6): client-side filter box over the unpaginated vendor payload; server-backed autocomplete handles vendor discovery.

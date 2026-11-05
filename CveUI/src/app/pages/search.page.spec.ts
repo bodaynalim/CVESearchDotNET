@@ -22,6 +22,10 @@ describe('SearchPage (routed through the app shell)', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('cve-2018-0001'.toUpperCase());
 
+    // A successful lookup is recorded as a recent entry (asserted via the
+    // localStorage seam; chip rendering is covered in its own test).
+    expect(JSON.parse(localStorage.getItem('cveui.recentLookups')!)).toContain('CVE-2018-0001');
+
     // Severity badges: API strings are canonicalized; scores/format per design.
     expect(compiled.textContent).toContain('Critical');
     expect(compiled.textContent).toContain('9.8');
