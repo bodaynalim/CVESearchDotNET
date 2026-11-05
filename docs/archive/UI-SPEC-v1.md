@@ -1,6 +1,7 @@
 # CVE Search UI — Specification
 
-Status: **Draft — pending review**
+Status: **Completed — historical record.**
+Implementation spec for CveUI v1 (GitHub issues #3–#10, shipped 2026-11-05); its global-search and Weaknesses amendments are specified in GitHub issue #11 (also completed). Do not treat this document as a live contract — the canonical vocabulary lives in `docs/GLOSSARY.md` (API) and `CveUI/GLOSSARY.md` (UI), and the settled decisions in `docs/adr/`.
 Date: 2026-11-05
 
 ## 1. Goal
