@@ -25,6 +25,6 @@ describe('VendorsPage (routed through the app shell)', () => {
 
     http.expectOne('http://test-api/vendors').flush([]);
     await fixture.whenStable();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No vendors available');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No vendors match this filter');
   });
 });

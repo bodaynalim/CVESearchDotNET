@@ -1,15 +1,36 @@
 @import "tailwindcss";
 
+/*
+ * Design language: light content area + dark indigo sidebar (per the
+ * OpenCVE reference screenshot in docs/). Panels are white cards with a
+ * neutral border and a subtle top accent.
+ */
+
 @theme {
-  --color-severity-none: #64748b;
-  --color-severity-low: #22c55e;
-  --color-severity-medium: #eab308;
-  --color-severity-high: #f97316;
-  --color-severity-critical: #ef4444;
+  /* Sidebar */
+  --color-nav-bg: #191934;
+  --color-nav-hover: #232340;
+  --color-nav-active: #1f1e3c;
+  --color-nav-text: #b6b6cf;
+  --color-nav-text-active: #ffffff;
+
+  /* Accents */
+  --color-brand: #5c53e0;
+  --color-brand-hover: #4b43c9;
+  --color-page-bg: #eef0f4;
+  --color-card-border: #e3e4ea;
+  --color-panel-accent: #33306b;
+
+  /* Severity badges (CVSS) */
+  --color-severity-low: #00b8d9;
+  --color-severity-medium: #f99a25;
+  --color-severity-high: #e23f3f;
+  --color-severity-critical: #b31f1f;
+  --color-severity-none: #9aa0ab;
 }
 
 html {
-  @apply bg-slate-950 text-slate-200 antialiased;
+  @apply text-slate-800 antialiased;
 }
 
 body {

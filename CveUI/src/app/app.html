@@ -1,5 +1,37 @@
-<h1 class="text-lg font-semibold text-sky-300">CveUI</h1>
-<nav class="space-x-4 text-sm text-slate-400">
-  <a routerLink="/vendors" class="hover:text-sky-300">Vendors</a>
-</nav>
-<router-outlet />
+<div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="flex w-56 shrink-0 flex-col bg-[var(--color-nav-bg)] text-[var(--color-nav-text)]">
+    <div class="flex items-center gap-2 px-5 py-5">
+      <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white font-bold text-[var(--color-nav-bg)]">C</span>
+      <h1 class="text-lg font-semibold text-white">CveUI</h1>
+    </div>
+    <p class="px-5 pt-2 pb-3 text-[10px] tracking-[0.14em] uppercase opacity-60">Main navigation</p>
+    <nav class="flex flex-col text-sm">
+      <a
+        routerLink="/vendors"
+        class="flex items-center gap-3 bg-[var(--color-nav-active)] px-5 py-3 font-semibold text-white"
+      >
+        Vendors &amp; Products
+      </a>
+      <span class="cursor-not-allowed px-5 py-3 opacity-50 select-none">Vulnerabilities</span>
+      <span class="cursor-not-allowed px-5 py-3 opacity-50 select-none">Weaknesses</span>
+      <span class="cursor-not-allowed px-5 py-3 opacity-50 select-none">Statistics</span>
+    </nav>
+  </aside>
+
+  <!-- Content column -->
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="flex items-center justify-between bg-white px-6 py-4">
+      <h2 class="text-xl font-semibold">Vendors &amp; Products</h2>
+      <a
+        href="http://localhost:5254/swagger"
+        target="_blank"
+        rel="noopener"
+        class="text-sm font-medium text-[var(--color-brand)] hover:underline"
+      >API Docs</a>
+    </header>
+    <main class="flex-1 content-start bg-[var(--color-page-bg)] p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>

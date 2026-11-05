@@ -20,7 +20,7 @@ mutation endpoints.
 | CORS                | API's `Cors:Origins` config updated to include `http://localhost:4200`   |
 | API base URL        | Angular `environment` files (dev vs prod)                              |
 | Search UX           | Vendor → product drill-down **plus** direct CVE-ID lookup               |
-| Look & feel         | Dark slate security-tool theme; CVSS severity badge colors; mono CVE IDs |
+| Look & feel         | OpenCVE-style (reference screenshot in `docs/`): dark indigo sidebar, light content area, white card panels with a top accent border, indigo link buttons, product chips, colored CVSS severity badges. |
 
 ## 3. API Contract (what the UI consumes)
 
