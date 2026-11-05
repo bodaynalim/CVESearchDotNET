@@ -1,5 +1,5 @@
 import { Injector } from '@angular/core';
-import { RecentLookups } from './recent-lookups';
+import { RECENT_LOOKUPS_STORAGE_KEY, RecentLookups } from './recent-lookups';
 
 /**
  * Each test builds a fresh root-less injector per service instance, because
@@ -13,11 +13,14 @@ function createService(): RecentLookups {
 
 describe('RecentLookups', () => {
   beforeEach(() => {
-    localStorage.removeItem('cveui.recentLookups');
+    localStorage.removeItem(RECENT_LOOKUPS_STORAGE_KEY);
   });
 
-  it('starts with history from localStorage', () => {
-    localStorage.setItem('cveui.recentLookups', JSON.stringify(['CVE-2024-0002', 'CVE-2024-0001']));
+  it('starts with history from localStorage, normalized and deduplicated', () => {
+    localStorage.setItem(
+      RECENT_LOOKUPS_STORAGE_KEY,
+      JSON.stringify(['CVE-2024-0002', 'cve-2024-0001', 'CVE-2024-0001']),
+    );
     expect(createService().entries()).toEqual(['CVE-2024-0002', 'CVE-2024-0001']);
   });
 
@@ -27,7 +30,7 @@ describe('RecentLookups', () => {
     service.add('CVE-2024-0002');
     service.add('cve-2024-0001'); // duplicate, re-promoted to newest
     expect(service.entries()).toEqual(['CVE-2024-0001', 'CVE-2024-0002']);
-    expect(localStorage.getItem('cveui.recentLookups')).toEqual(
+    expect(localStorage.getItem(RECENT_LOOKUPS_STORAGE_KEY)).toEqual(
       JSON.stringify(['CVE-2024-0001', 'CVE-2024-0002']),
     );
   });
@@ -51,6 +54,6 @@ describe('RecentLookups', () => {
     service.add('CVE-2024-0001');
     service.clear();
     expect(service.entries()).toEqual([]);
-    expect(localStorage.getItem('cveui.recentLookups')).toBe('[]');
+    expect(localStorage.getItem(RECENT_LOOKUPS_STORAGE_KEY)).toBe('[]');
   });
 });

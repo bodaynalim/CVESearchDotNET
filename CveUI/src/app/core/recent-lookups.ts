@@ -1,23 +1,22 @@
 import { Injectable, signal } from '@angular/core';
+import { normalizeCveId } from './cve-id';
 
-const STORAGE_KEY = 'cveui.recentLookups';
+export const RECENT_LOOKUPS_STORAGE_KEY = 'cveui.recentLookups';
 const MAX_ENTRIES = 5;
 
 /**
  * Recently looked-up CVE IDs, local-only per spec (no backend persistence).
- * Newest first, deduplicated, capped at MAX_ENTRIES.
+ * Newest first, deduplicated (normalized), capped at MAX_ENTRIES.
  */
 @Injectable({ providedIn: 'root' })
 export class RecentLookups {
-  private static readonly MAX = MAX_ENTRIES;
-
   readonly entries = signal<string[]>(RecentLookups.read());
 
   add(cveId: string): void {
-    const normalized = cveId.trim().toUpperCase();
+    const normalized = normalizeCveId(cveId);
     if (!normalized) return;
     this.entries.update(current =>
-      [normalized, ...current.filter(entry => entry !== normalized)].slice(0, RecentLookups.MAX),
+      [normalized, ...current.filter(entry => entry !== normalized)].slice(0, MAX_ENTRIES),
     );
     this.persist();
   }
@@ -29,9 +28,15 @@ export class RecentLookups {
 
   private static read(): string[] {
     try {
-      const raw = globalThis.localStorage?.getItem(STORAGE_KEY);
+      const raw = globalThis.localStorage?.getItem(RECENT_LOOKUPS_STORAGE_KEY);
       const parsed: unknown = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed.filter((entry): entry is string => typeof entry === 'string') : [];
+      return Array.isArray(parsed)
+        ? parsed
+            .filter((entry): entry is string => typeof entry === 'string' && entry.trim() !== '')
+            .map(normalizeCveId)
+            .reduce<string[]>((unique, entry) => (unique.includes(entry) ? unique : [...unique, entry]), [])
+            .slice(0, MAX_ENTRIES)
+        : [];
     } catch {
       return []; // privacy modes/disabled storage degrade to no history
     }
@@ -39,7 +44,7 @@ export class RecentLookups {
 
   private persist(): void {
     try {
-      globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(this.entries()));
+      globalThis.localStorage?.setItem(RECENT_LOOKUPS_STORAGE_KEY, JSON.stringify(this.entries()));
     } catch {
       // Same degradation as read(): ignore storage failures.
     }
