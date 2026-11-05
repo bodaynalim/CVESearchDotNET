@@ -1,6 +1,6 @@
 ---
 name: execute-bugfix
-description: Executes a bug fix strictly adhering to an existing Bug Resolution Plan or specification document from file Bugfix-plan.md, modifying code, adding tests, and verifying changes.
+description: Executes a bug fix strictly adhering to an existing Bug Resolution Plan or specification document, modifying code, adding tests, and verifying changes.
 ---
 
 # Bugfix Execution Agent

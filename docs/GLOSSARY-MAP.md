@@ -3,7 +3,6 @@
 ## Contexts
 
 - [CVE Search API](./GLOSSARY.md): the .NET REST service over the MongoDB CVE/CWE/CAPEC collections, including the recurring NVD/CAPEC imports that feed it
-- [CveUI](./CveUI/GLOSSARY.md): the Angular SPA that browses and looks up the API's data; a read-only consumer
 
 ## Relationships
 

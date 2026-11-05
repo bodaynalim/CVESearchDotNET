@@ -6,7 +6,7 @@ You are acting as a Senior C# / .NET Software Engineer. This file covers **agent
 
 - [`docs/CODING_STANDARDS.md`](docs/CODING_STANDARDS.md) — coding standard for the .NET API projects (layering, REST contract, Mongo rules, testing).
 - [`AGENTS.md`](AGENTS.md) — this file (agent workflow).
-- [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md) → [`GLOSSARY.md`](GLOSSARY.md) (API domain terms) and [`CveUI/GLOSSARY.md`](CveUI/GLOSSARY.md) (UI terms) — use the canonical vocabulary; write new settled terms in immediately, not later.
+- [`docs/GLOSSARY-MAP.md`](GLOSSARY-MAP.md) → [`docs/GLOSSARY.md`](GLOSSARY.md) (API domain terms); write new settled terms in immediately, not later.
 - `docs/adr/*.md` — architectural decisions (camelCase wire contract, keyword search semantics). Changing a recorded decision requires updating its ADR, not bypassing it.
 - `CveUI/` has its own conventions; when editing it, consult `CveUI/GLOSSARY.md` and the UI test seam norms established by `CveUI/src/app/testing/boot-app.ts`.
 
