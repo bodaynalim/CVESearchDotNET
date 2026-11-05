@@ -21,6 +21,13 @@ describe('SearchPage (routed through the app shell)', () => {
     expect(router.url).toBe('/cves/CVE-2018-0001');
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('cve-2018-0001'.toUpperCase());
+
+    // Severity badges: API strings are canonicalized; scores/format per design.
+    expect(compiled.textContent).toContain('Critical');
+    expect(compiled.textContent).toContain('9.8');
+    expect(compiled.textContent).toContain('High');
+    expect(compiled.textContent).toContain('7.5');
+    expect(compiled.textContent).toContain('CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H');
   });
 
   it('rejects invalid IDs with a hint instead of navigating', async () => {
@@ -50,8 +57,8 @@ function sampleCve() {
     modified: '2018-01-12T00:00:00Z',
     cwes: ['CWE-20'],
     summary: 'An issue was discovered in Product X.',
-    Cvss2: null,
-    Cvss3: { BaseScore: 5.3, VectorString: 'CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N' },
+    cvss2: { baseScore: 7.5, severity: 'HIGH', vectorString: 'AV:N/AC:L/Au:N/C:P/I:P/A:P' },
+    cvss3: { baseScore: 9.8, baseSeverity: 'CRITICAL', vectorString: 'CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H' },
     referencesUrls: ['https://example.com/advisory'],
     vulnerableConfigurations: ['cpe:2.3:a:vendor:product:1.0:*:*:*:*:*:*:*:*'],
   };
