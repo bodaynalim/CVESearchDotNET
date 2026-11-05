@@ -19,6 +19,33 @@ describe('VendorProductsPage (routed through the app shell)', () => {
     expect(compiled.textContent).toContain('wss');
   });
 
+  it('marks a selected product as the CVE list target', async () => {
+    const { fixture, http, router } = await bootApp();
+
+    await router.navigate(['/vendors/akamai']);
+    await settle();
+    http.expectOne('http://test-api/vendors/akamai').flush({
+      vendor: 'akamai',
+      softwares: ['keystone', 'wss'],
+    });
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).not.toContain('CVE list target');
+
+    const chip = Array.from(compiled.querySelectorAll('button')).find(b => b.textContent!.includes('keystone'))!;
+    chip.click();
+    await fixture.whenStable();
+    expect(compiled.textContent).toContain('CVE list target');
+    expect(compiled.textContent).toContain('akamai / keystone');
+
+    // Clicking again deselects.
+    const chipAgain = Array.from(compiled.querySelectorAll('button')).find(b => b.textContent!.includes('keystone'))!;
+    chipAgain.click();
+    await fixture.whenStable();
+    expect(compiled.textContent).not.toContain('CVE list target');
+  });
+
   it('shows a vendor-not-found state on HTTP 404', async () => {
     const { fixture, http, router } = await bootApp();
 

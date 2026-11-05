@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { isApiNotFound } from '../core/api/api.http';
 import { VendorsApi } from '../core/api/vendors.api';
@@ -22,7 +22,7 @@ import { VendorsApi } from '../core/api/vendors.api';
             <span class="text-xs text-slate-500">({{ data.softwares.length.toLocaleString() }} products)</span>
           </div>
 
-          <p class="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Filter products</p>
+          <p class="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Select a product</p>
           <input
             class="mb-4 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand)]/20"
             type="text"
@@ -34,14 +34,34 @@ import { VendorsApi } from '../core/api/vendors.api';
           <ul class="flex flex-wrap gap-2">
             @for (product of filtered(); track product) {
               <li>
-                <span class="rounded-full bg-[var(--color-brand)]/10 px-3 py-1 font-mono text-xs text-[var(--color-brand)]">
+                <button
+                  type="button"
+                  (click)="select(product)"
+                  [attr.aria-pressed]="selected() === product"
+                  class="rounded-full px-3 py-1 font-mono text-xs transition-colors"
+                  [class]="
+                    selected() === product
+                      ? 'bg-[var(--color-brand)] text-white'
+                      : 'bg-[var(--color-brand)]/10 text-[var(--color-brand)] hover:bg-[var(--color-brand)]/20'
+                  "
+                >
                   {{ product }}
-                </span>
+                </button>
               </li>
             } @empty {
               <li class="py-4 text-sm text-slate-500">No products match this filter.</li>
             }
           </ul>
+
+          @if (selected(); as product) {
+            <div class="mt-4 flex items-center gap-3 rounded border border-[var(--color-brand)]/30 bg-[var(--color-brand)]/5 px-4 py-3">
+              <p class="text-sm">
+                CVE list target:
+                <span class="font-mono text-xs text-[var(--color-brand)]">{{ data.vendor }} / {{ product }}</span>
+              </p>
+              <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">CVE list opens here in the next slice</span>
+            </div>
+          }
         }
       </div>
     </section>
@@ -60,6 +80,17 @@ export class VendorProductsPage {
   protected readonly notFound = computed(() => isApiNotFound(this.products.error()));
 
   protected readonly query = signal('');
+  protected readonly selected = signal<string | null>(null);
+
+  // The router reuses this instance for /vendors/A → /vendors/B; a query or
+  // selection carried across vendors would show a target that doesn't exist.
+  constructor() {
+    effect(() => {
+      this.vendor();
+      this.query.set('');
+      this.selected.set(null);
+    });
+  }
 
   protected readonly filtered = computed(() => {
     const needle = this.query().toLowerCase();
@@ -69,5 +100,9 @@ export class VendorProductsPage {
 
   protected onQuery(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);
+  }
+
+  protected select(product: string): void {
+    this.selected.set(this.selected() === product ? null : product);
   }
 }
