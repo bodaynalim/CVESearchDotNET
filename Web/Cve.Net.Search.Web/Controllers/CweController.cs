@@ -3,7 +3,6 @@ using Cve.Application.Services;
 using Cve.Net.Search.Domain.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -33,7 +32,7 @@ public class CweController : Controller
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CountAll(CancellationToken cancellationToken)
     {
-        var (_, total) = await _cweMongoService.GetCweList(null, 1, 1, cancellationToken);
+        var total = await _cweMongoService.CountCwes(null, cancellationToken);
 
         return Ok(new CweSearchCountViewModel { Total = total });
     }
@@ -68,7 +67,7 @@ public class CweController : Controller
         [FromRoute][Required][MinLength(1)] string keyword,
         CancellationToken cancellationToken)
     {
-        var (_, total) = await _cweMongoService.GetCweList(NormalizeKeyword(keyword), 1, 1, cancellationToken);
+        var total = await _cweMongoService.CountCwes(NormalizeKeyword(keyword), cancellationToken);
 
         return Ok(new CweSearchCountViewModel { Total = total });
     }

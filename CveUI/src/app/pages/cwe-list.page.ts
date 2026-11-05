@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { QueryParamsHandling, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CweApi, CweListRequest } from '../core/api/cwe.api';
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
@@ -125,15 +125,16 @@ export class CweListPage {
   private readonly cweApi = inject(CweApi);
   private readonly router = inject(Router);
 
-  private readonly listRequest = computed<CweListRequest | undefined>(() => {
+  private readonly listRequest = computed<CweListRequest>(() => {
     const keyword = this.keyword();
     return keyword ? { kind: 'keyword', keyword } : { kind: 'all' };
   });
 
-  protected readonly results = this.cweApi.list(() => {
-    const base = this.listRequest();
-    return base === undefined ? undefined : { ...base, count: this.pageSize(), page: this.pageNumber() };
-  });
+  protected readonly results = this.cweApi.list(() => ({
+    ...this.listRequest(),
+    count: this.pageSize(),
+    page: this.pageNumber(),
+  }));
 
   // Count refetches only when the result set changes - never on page turns.
   private readonly totalCount = this.cweApi.listCount(this.listRequest);
@@ -184,7 +185,7 @@ export class CweListPage {
     void this.router.navigate([], { queryParams, queryParamsHandling: 'merge' });
   }
 
-  private patchQueryParams(queryParams: Record<string, string | number | null>, handling: QueryParamsHandling = 'merge'): void {
-    void this.router.navigate([], { queryParams, queryParamsHandling: handling });
+  private patchQueryParams(queryParams: Record<string, string | number | null>): void {
+    void this.router.navigate([], { queryParams, queryParamsHandling: 'merge' });
   }
 }

@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Cve.Infrastructure.Services;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
+using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
 using FluentAssertions;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -11,10 +12,10 @@ namespace Cve.Net.Search.Tests;
 
 public class KeywordFilterBuilderTests
 {
-    private static BsonDocument Render(FilterDefinition<CveMongoModel> filter)
+    private static BsonDocument Render<T>(FilterDefinition<T> filter)
     {
-        var serializer = BsonSerializer.SerializerRegistry.GetSerializer<CveMongoModel>();
-        return filter.Render(new RenderArgs<CveMongoModel>(serializer, BsonSerializer.SerializerRegistry));
+        var serializer = BsonSerializer.SerializerRegistry.GetSerializer<T>();
+        return filter.Render(new RenderArgs<T>(serializer, BsonSerializer.SerializerRegistry));
     }
 
     [Fact]
@@ -54,6 +55,19 @@ public class KeywordFilterBuilderTests
         Render(filter).ToJson().Should().Be(
             new BsonDocument("$or", new BsonArray { RegexBson("heap", "Summary") }).ToJson());
     }
+
+    [Fact]
+    public void Build_CweFields_MatchesIdOrNameCaseInsensitively()
+    {
+        var filter = KeywordFilterBuilder.Build<CweMongoModel>("script", c => c.CweId, c => c.Name);
+
+        var doc = Render(filter);
+        doc.ToJson().Should().Contain("CweId");
+        doc.ToJson().Should().Contain("Name");
+        doc.ToJson().Should().Contain(CaseInsensitiveRegexPattern("script"));
+    }
+
+    private static string CaseInsensitiveRegexPattern(string keyword) => Regex.Escape(keyword);
 
     private static BsonDocument RegexBson(string pattern, string field = "CveId") => new(
         field,

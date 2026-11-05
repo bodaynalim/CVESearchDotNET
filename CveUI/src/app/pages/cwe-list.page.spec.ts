@@ -12,6 +12,25 @@ function cwe(id: string, name: string) {
 }
 
 describe('CweListPage (routed through the app shell)', () => {
+  it('activates the Weaknesses nav link, which navigates to /cwe', async () => {
+    const { fixture, router } = await bootApp();
+
+    await router.navigateByUrl('/cwe');
+    await settle();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const weaknessesLink = Array.from(compiled.querySelectorAll('aside a')).find(
+      a => a.textContent!.trim() === 'Weaknesses',
+    )!;
+    expect(weaknessesLink).toBeTruthy(); // a live routerLink, no longer a placeholder span
+    expect(weaknessesLink.getAttribute('href')).toBe('/cwe');
+    // routerLinkActive marks the current section.
+    expect(weaknessesLink.className).toContain('bg-[var(--color-nav-active)]');
+
+    weaknessesLink.click();
+    await settle();
+    expect(router.url).toBe('/cwe'); // navigation stays on the page
+  });
+
   it('lists all CWE entries with the total, paginated by URL', async () => {
     const { fixture, router, http } = await bootApp();
 

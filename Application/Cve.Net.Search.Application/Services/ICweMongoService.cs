@@ -13,6 +13,11 @@ public interface ICweMongoService : IBaseMongoService<CweMongoModel>, IIndexInit
     Task CreateOrUpdateExisting(IList<CweMongoModel> items, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Number of CWE entries matching the keyword (null = all).
+    /// </summary>
+    Task<long> CountCwes(string? keyword, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Page of CWE entries in fixed ascending-numeric-ID order. A null
     /// keyword lists all entries; otherwise entries whose ID or name
     /// contains the keyword (case-insensitive) are matched.
@@ -21,6 +26,6 @@ public interface ICweMongoService : IBaseMongoService<CweMongoModel>, IIndexInit
     /// <param name="count">Count</param>
     /// <param name="page">Page</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <returns>The page entries and the total match count.</returns>
     Task<(IList<CweMongoModel> Items, long Total)> GetCweList(string? keyword, int count, int page, CancellationToken cancellationToken = default);
 }

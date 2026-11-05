@@ -67,12 +67,36 @@ public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
 
     public async Task CreateOrUpdateExisting(IList<CveMongoModel> items, CancellationToken cancellationToken = default)
     {
+        if (items.Count == 0)
+            return;
+
+        // A replacement document carrying a null `_id` would fail every
+        // upsert path with an immutable-field or duplicate-key error. Pin
+        // each replacement to its existing document's `_id` first; genuinely
+        // new CVEs get the driver-generated `_id`.
+        var existingIds = await GetExistingCveIds(items.Select(s => s.CveId), cancellationToken);
+        var existingIdSet = existingIds.ToHashSet();
+        // The documents are keyed by CveId (unique index), so only documents
+        // already present need their _id carried over.
+        var existing = await Collection
+            .Find(Builders<CveMongoModel>.Filter.In(c => c.CveId, existingIdSet))
+            .Project(s => new { s.CveId, s.Id })
+            .ToListAsync(cancellationToken);
+        var idByCveId = existing.ToDictionary(x => x.CveId, x => x.Id);
+
         var bulkModels = items
-            .Select(s => new ReplaceOneModel<CveMongoModel>(
-                Builders<CveMongoModel>.Filter.Eq(c => c.CveId, s.CveId),
-                s)
+            .DistinctBy(s => s.CveId)
+            .Select(s =>
             {
-                IsUpsert = true
+                if (idByCveId.TryGetValue(s.CveId, out var id))
+                    s.Id = id;
+
+                return new ReplaceOneModel<CveMongoModel>(
+                    Builders<CveMongoModel>.Filter.Eq(c => c.CveId, s.CveId),
+                    s)
+                {
+                    IsUpsert = true
+                };
             });
 
         await Collection.BulkWriteAsync(bulkModels, cancellationToken: cancellationToken);
