@@ -1,0 +1,7 @@
+# Bulk upserts always carry a concrete `_id`
+
+Every bulk ReplaceOne upsert against the Mongo collections (Cves, Cwes, Capecs) writes replacement documents whose `_id` is either pinned from the existing matching document or freshly generated (`ObjectId.GenerateNewId()`). A replacement carrying `_id: null` fails both upsert paths: as an update it alters the immutable `_id` field (bulk-write error 66), and as an insert of a brand-new entry it can produce duplicate-key E11000 (the stale `_id: null` tombstone from earlier broken batches made every subsequent insert fail permanently). A batch with any such error aborts whole Hangfire import jobs.
+
+This is a deliberate deviation from the natural-looking code — plain `ReplaceOneModel` upserts *look* correct, and that exact shape shipped in three services before the contract was fixed. Considered alternatives: DeleteMany + InsertMany (loses atomic upsert behavior and churns documents on every refresh, and risks import rollbacks mid-crash), and letting Mongo auto-generate (impossible — replacement documents are written verbatim, including the null `_id`).
+
+Consequences: each flush performs one existence lookup plus one bulk write; callers never construct new documents with a null `_id`. Future Mongo writers (any new entity service, any importer helper) must follow `CveMongoService.CreateOrUpdateExisting(items)` — the abbreviated rule lives in `docs/CODING_STANDARDS.md`; this ADR holds the full context of why it is a contract, not a tautology.

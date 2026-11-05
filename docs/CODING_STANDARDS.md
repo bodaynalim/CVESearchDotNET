@@ -64,7 +64,7 @@ These standards apply to the C#/.NET projects in this repository (Application, D
 - Filter, sort, skip/limit through the builder API; **no N+1** loops — batch fetches or aggregations instead.
 - Indexes are created and maintained in the services' `EnsureIndexesAsync` (`IndexBootstrapper` runs them at startup) — when you add a queryable field to a hot filter, add the matching index there.
 - Prefer server-side filters (`CountDocumentsAsync`, positional/regex filters). For deliberately small collections, an in-memory sort+page over pre-filtered results is permitted **only with a comment sizing the collection** (cf. `CweMongoService.GetCweList`, ~1.5k docs). Count routes must use `CountDocumentsAsync`, never materialize documents.
-- **Bulk upserts must never serialize `null` `_id`** (hard — bug of record): pin each replacement to its existing document's `_id`, or assign `ObjectId.GenerateNewId().ToString()` for genuinely new documents. Replacement documents with null `_id` hit the immutable-field error on update and duplicate-key E11000 on insert.
+- **Bulk upserts must never serialize `null` `_id`** (hard — see `docs/adr/0003-bulk-upserts-carry-concrete-ids.md` for the full contract): pin each replacement to its existing document's `_id`, or assign `ObjectId.GenerateNewId().ToString()` for genuinely new documents.
 - Filters for keyword/listings come from the shared `KeywordFilterBuilder` (regex-escaped, case-insensitive `$or`) — do not hand-roll another regex builder.
 - Async driver methods only, with cancellation tokens; projection (`.Project<T>()`) whenever only a subset of fields is needed.
 
