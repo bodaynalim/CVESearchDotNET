@@ -18,7 +18,7 @@ describe('CweListPage (routed through the app shell)', () => {
     await router.navigateByUrl('/cwe');
     await settle();
     const compiled = fixture.nativeElement as HTMLElement;
-    const weaknessesLink = Array.from(compiled.querySelectorAll('aside a')).find(
+    const weaknessesLink = Array.from(compiled.querySelectorAll<HTMLAnchorElement>('aside a')).find(
       a => a.textContent!.trim() === 'Weaknesses',
     )!;
     expect(weaknessesLink).toBeTruthy(); // a live routerLink, no longer a placeholder span
