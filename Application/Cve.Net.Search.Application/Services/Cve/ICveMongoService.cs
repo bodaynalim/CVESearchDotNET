@@ -20,6 +20,35 @@ public interface ICveMongoService : IBaseMongoService<CveMongoModel>, IIndexInit
         int page, bool descending, bool byPublished = true, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Get all CVEs in the database, paged and date-ordered.
+    /// </summary>
+    /// <param name="count">Count</param>
+    /// <param name="page">Page</param>
+    /// <param name="descending">True if order by descending</param>
+    /// <param name="byPublished">True if order by published date (else by modified date)</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<IList<CveMongoModel>> GetCveListAll(int count, int page, bool descending,
+        bool byPublished = true, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get CVEs whose CVE ID or summary contains the keyword (case-insensitive), paged and date-ordered.
+    /// </summary>
+    /// <param name="keyword">Search phrase</param>
+    /// <param name="count">Count</param>
+    /// <param name="page">Page</param>
+    /// <param name="descending">True if order by descending</param>
+    /// <param name="byPublished">True if order by published date (else by modified date)</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<IList<CveMongoModel>> GetCveListByKeyword(string keyword, int count, int page, bool descending,
+        bool byPublished = true, CancellationToken cancellationToken = default);
+
+    Task<long> CountAllCves(CancellationToken cancellationToken = default);
+
+    Task<long> CountCvesByKeyword(string keyword, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Insert given CVE items in a single batch operation.
     /// Items already present (same CveId) are skipped.
     /// </summary>

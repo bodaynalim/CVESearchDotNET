@@ -13,6 +13,13 @@ export interface CveSearchParams {
   byPublished: boolean;
 }
 
+/** Global (or keyword) list request — vendor/product filtering is done with searchByProduct instead. */
+export type CveListQuery =
+  | { kind: 'all'; count: number; page: number; descending: boolean; byPublished: boolean }
+  | { kind: 'keyword'; keyword: string; count: number; page: number; descending: boolean; byPublished: boolean };
+
+export type CveListCountQuery = { kind: 'all' } | { kind: 'keyword'; keyword: string };
+
 @Injectable({ providedIn: 'root' })
 export class CveApi {
   readonly #injector = inject(Injector);
@@ -50,8 +57,35 @@ export class CveApi {
     });
   }
 
-  get(cveIdGetter: () => string | undefined): HttpResourceRef<CveViewModel | undefined> {
-    return createResource<CveViewModel>(this.#injector, () => {
+  /**
+   * Global CVE list: request getter returns undefined to idle, 'all' for the
+   * whole database, or 'keyword' for the submitted search phrase.
+   */
+  list(requestGetter: () => CveListQuery | undefined): HttpResourceRef<CveViewModel[] | undefined> {
+    return createResource<CveViewModel[]>(this.#injector, () => {
+      const request = requestGetter();
+      if (request === undefined) return undefined;
+      const { count, page, descending, byPublished } = request;
+      const prefix =
+        request.kind === 'all'
+          ? '/cve/all'
+          : `/cve/search/${encodePathSegment(request.keyword)}`;
+      return { url: `${prefix}/${count}/${page}/${descending}/${byPublished}` };
+    });
+  }
+
+  /** Total matched CVEs for the current list request (all or keyword). */
+  listCount(requestGetter: () => CveListCountQuery | undefined): HttpResourceRef<CveSearchCount | undefined> {
+    return createResource<CveSearchCount>(this.#injector, () => {
+      const request = requestGetter();
+      if (request === undefined) return undefined;
+      return {
+        url: request.kind === 'all' ? '/cve/all/count' : `/cve/search-count/${encodePathSegment(request.keyword)}`,
+      };
+    });
+  }
+
+  get(cveIdGetter: () => string | undefined): HttpResourceRef<CveViewModel | undefined> {    return createResource<CveViewModel>(this.#injector, () => {
       const cveId = cveIdGetter();
       return cveId === undefined ? undefined : { url: `/cve/${encodePathSegment(cveId)}` };
     });

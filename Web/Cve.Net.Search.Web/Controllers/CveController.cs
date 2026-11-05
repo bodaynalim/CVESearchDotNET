@@ -78,6 +78,83 @@ public class CveController : Controller
     }
 
     /// <summary>
+    /// Count all CVEs in the database
+    /// </summary>
+    [HttpGet("all/count")]
+    [ProducesResponseType(typeof(CveSearchCountViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CountAll(CancellationToken cancellationToken)
+    {
+        var total = await _cveMongoService.CountAllCves(cancellationToken);
+
+        return Ok(new CveSearchCountViewModel { Total = total });
+    }
+
+    /// <summary>
+    /// Get all CVEs in the database, paged and date-ordered
+    /// </summary>
+    /// <param name="count">Count of cves</param>
+    /// <param name="page">Page</param>
+    /// <param name="descending">True if order by descending</param>
+    /// <param name="byPublished">True if order by published date (else by modified date)</param>
+    /// <returns></returns>
+    [HttpGet("all/{count}/{page}/{descending}/{byPublished}")]
+    [ProducesResponseType(typeof(IEnumerable<CveViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAll(
+        [FromRoute][Range(1, int.MaxValue)] int count,
+        [FromRoute][Range(1, int.MaxValue)] int page,
+        [FromRoute] bool descending,
+        [FromRoute] bool byPublished,
+        CancellationToken cancellationToken)
+    {
+        var cves = await _cveMongoService.GetCveListAll(count, page, descending, byPublished, cancellationToken);
+
+        return Ok(cves.Select(c => _mapper.Map<CveViewModel>(c)));
+    }
+
+    /// <summary>
+    /// Count CVEs whose CVE ID or summary contains the keyword
+    /// </summary>
+    /// <param name="keyword">Search phrase</param>
+    [HttpGet("search-count/{keyword}")]
+    [ProducesResponseType(typeof(CveSearchCountViewModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CountByKeyword(
+        [FromRoute][Required][MinLength(1)] string keyword,
+        CancellationToken cancellationToken)
+    {
+        var total = await _cveMongoService.CountCvesByKeyword(keyword, cancellationToken);
+
+        return Ok(new CveSearchCountViewModel { Total = total });
+    }
+
+    /// <summary>
+    /// Search CVEs whose CVE ID or summary contains the keyword (case-insensitive), paged and date-ordered
+    /// </summary>
+    /// <param name="keyword">Search phrase</param>
+    /// <param name="count">Count of cves</param>
+    /// <param name="page">Page</param>
+    /// <param name="descending">True if order by descending</param>
+    /// <param name="byPublished">True if order by published date (else by modified date)</param>
+    /// <returns></returns>
+    [HttpGet("search/{keyword}/{count}/{page}/{descending}/{byPublished}")]
+    [ProducesResponseType(typeof(IEnumerable<CveViewModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SearchByKeyword(
+        [FromRoute][Required][MinLength(1)] string keyword,
+        [FromRoute][Range(1, int.MaxValue)] int count,
+        [FromRoute][Range(1, int.MaxValue)] int page,
+        [FromRoute] bool descending,
+        [FromRoute] bool byPublished,
+        CancellationToken cancellationToken)
+    {
+        var cves = await _cveMongoService.GetCveListByKeyword(keyword, count, page, descending, byPublished, cancellationToken);
+
+        return Ok(cves.Select(c => _mapper.Map<CveViewModel>(c)));
+    }
+
+    /// <summary>
     /// Get CVE by ID
     /// </summary>
     /// <param name="cveId">CVE ID (ex. CVE-2018-0001)</param>

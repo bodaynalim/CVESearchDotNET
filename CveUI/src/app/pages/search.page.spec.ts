@@ -51,6 +51,18 @@ describe('SearchPage (routed through the app shell)', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('is not a valid CVE ID');
     expect(http.match(() => true).length).toBe(0);
   });
+  it('links to the global CVE list from the home page', async () => {
+    const { fixture, router } = await bootApp();
+
+    await router.navigateByUrl('/');
+    await settle();
+
+    const browse = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('a[href="/cves"]')!;
+    expect(browse).toBeTruthy();
+    browse.click();
+    await settle();
+    expect(router.url).toBe('/cves');
+  });
 });
 
 function sampleCve() {

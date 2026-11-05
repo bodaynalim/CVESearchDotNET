@@ -50,6 +50,13 @@ import { RecentLookups } from '../core/recent-lookups';
         } @else {
           <p class="mt-2 text-xs text-slate-500">Format: CVE-&lt;year&gt;-&lt;number&gt; — e.g. CVE-2018-0001</p>
         }
+        <p class="mt-4 flex items-center gap-2 text-xs text-slate-500">
+          <span>or</span>
+          <a
+            routerLink="/cves"
+            class="font-medium text-[var(--color-brand)] hover:underline"
+          >Browse all CVEs</a>
+        </p>
       </div>
     </section>
   `,

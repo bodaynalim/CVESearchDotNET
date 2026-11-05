@@ -1,4 +1,4 @@
-using Cve.Application.Services;
+﻿using Cve.Application.Services;
 using Cve.Infrastructure.Services;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
@@ -107,29 +107,63 @@ public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
     public async Task<IList<CveMongoModel>> GetCveList(string vendor, string product, int count,
         int page, bool descending, bool byPublished, CancellationToken cancellationToken = default)
     {
-        var filter = GetVendorProductFilter(vendor, product);
+        return await GetCveListCore(GetVendorProductFilter(vendor, product), count, page, descending, byPublished, cancellationToken);
+    }
 
-        SortDefinition<CveMongoModel> sort = (byPublished, descending) switch
-        {
-            (true, true) => Builders<CveMongoModel>.Sort.Descending(v => v.Published),
-            (true, false) => Builders<CveMongoModel>.Sort.Ascending(v => v.Published),
-            (false, true) => Builders<CveMongoModel>.Sort.Descending(v => v.Modified),
-            (false, false) => Builders<CveMongoModel>.Sort.Ascending(v => v.Modified),
-        };
+    public Task<IList<CveMongoModel>> GetCveListAll(int count, int page, bool descending,
+        bool byPublished = true, CancellationToken cancellationToken = default)
+    {
+        return GetCveListCore(FilterDefinition<CveMongoModel>.Empty, count, page, descending, byPublished, cancellationToken);
+    }
 
-        page = page <= 0 ? 1 : page;
-
-        var result = Collection.Find(filter).Skip((page - 1) * count).Limit(count).Sort(sort);
-
-        return await result.ToListAsync(cancellationToken);
+    public Task<IList<CveMongoModel>> GetCveListByKeyword(string keyword, int count, int page, bool descending,
+        bool byPublished = true, CancellationToken cancellationToken = default)
+    {
+        return GetCveListCore(KeywordFilterBuilder.Build<CveMongoModel>(keyword, c => c.CveId, c => c.Summary),
+            count, page, descending, byPublished, cancellationToken);
     }
 
     public async Task<long> CountCves(string vendor, string product, CancellationToken cancellationToken = default)
     {
-        var filter = GetVendorProductFilter(vendor, product);
+        return await CountCore(GetVendorProductFilter(vendor, product), cancellationToken);
+    }
 
+    public Task<long> CountAllCves(CancellationToken cancellationToken = default)
+    {
+        return CountCore(FilterDefinition<CveMongoModel>.Empty, cancellationToken);
+    }
+
+    public Task<long> CountCvesByKeyword(string keyword, CancellationToken cancellationToken = default)
+    {
+        return CountCore(KeywordFilterBuilder.Build<CveMongoModel>(keyword, c => c.CveId, c => c.Summary), cancellationToken);
+    }
+
+    private async Task<IList<CveMongoModel>> GetCveListCore(FilterDefinition<CveMongoModel> filter, int count,
+        int page, bool descending, bool byPublished, CancellationToken cancellationToken)
+    {
+        page = page <= 0 ? 1 : page;
+
+        var result = Collection
+            .Find(filter)
+            .Skip((page - 1) * count)
+            .Limit(count)
+            .Sort(GetDateSort(byPublished, descending));
+
+        return await result.ToListAsync(cancellationToken);
+    }
+
+    private async Task<long> CountCore(FilterDefinition<CveMongoModel> filter, CancellationToken cancellationToken)
+    {
         return await Collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
     }
+
+    private static SortDefinition<CveMongoModel> GetDateSort(bool byPublished, bool descending) => (byPublished, descending) switch
+    {
+        (true, true) => Builders<CveMongoModel>.Sort.Descending(v => v.Published),
+        (true, false) => Builders<CveMongoModel>.Sort.Ascending(v => v.Published),
+        (false, true) => Builders<CveMongoModel>.Sort.Descending(v => v.Modified),
+        (false, false) => Builders<CveMongoModel>.Sort.Ascending(v => v.Modified),
+    };
 
     public override async Task<CveMongoModel> CreateNewItemIfNotExist(CveMongoModel item, CancellationToken cancellationToken = default)
     {
@@ -166,8 +200,6 @@ public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
         return await Collection.Find(filter).Sort(sort).FirstOrDefaultAsync(cancellationToken);
     }
 
-    #region Private
-
     private FilterDefinition<CveMongoModel> GetVendorProductFilter(string vendor, string product)
     {
         var filter = FilterDefinition<CveMongoModel>.Empty;
@@ -178,6 +210,4 @@ public class CveMongoService : BaseMongoService<CveMongoModel>, ICveMongoService
 
         return filter;
     }
-
-    #endregion
 }
