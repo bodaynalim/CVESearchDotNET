@@ -8,10 +8,14 @@ import { createResource } from './http-resource';
 export class CweApi {
   readonly #injector = inject(Injector);
 
-  /** CWE numeric id, e.g. 1001 or "1001". */
-  get(cweId: string | number): HttpResourceRef<CweViewModel | undefined> {
-    return createResource<CweViewModel>(this.#injector, () => ({
-      url: `/cwe/${encodePathSegment(cweId)}`,
-    }));
+  /**
+   * CWE numeric id, e.g. 1001 or "79". A getter returning undefined idles
+   * the resource (no request).
+   */
+  get(idGetter: () => string | number | undefined): HttpResourceRef<CweViewModel | undefined> {
+    return createResource<CweViewModel>(this.#injector, () => {
+      const cweId = idGetter();
+      return cweId === undefined ? undefined : { url: `/cwe/${encodePathSegment(cweId)}` };
+    });
   }
 }
