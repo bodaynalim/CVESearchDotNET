@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3 · Implementation craft — CveUI Interview Prep</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <h1>CveUI Interview Prep</h1>
+    <p class="subtitle">Themes from the Angular SPA, grounded in the code</p>
+    <a href="index.html">Guide home</a>
+    <a href="architecture-core.html">1 · Architecture core</a>
+    <a href="decisions-testing.html">2 · Decisions &amp; testing</a>
+    <a href="craft.html" aria-current="page">3 · Implementation craft</a>
+    <a href="synthesis.html">4 · Synthesis</a>
+  </nav>
+  <main>
+    <header>
+      <h1>3 · Implementation craft</h1>
+      <p>Pure business logic, router and composition patterns, and the Tailwind token system — the remaining code-grounded themes.</p>
+    </header>
+
+    <!-- ===================== Theme 7 ===================== -->
+    <h2>Theme: CVSS severity mapping — business logic as pure functions</h2>
+    <dl class="case">
+      <dt>What to say</dt>
+      <dd>"The severity chain — string from the API, then score thresholds, then 'Not scored' — lives in pure exported functions with their own specs. No framework involved, trivially testable. Where logic is pure, it gets a direct test regardless of the integration-first testing stance for behavior."</dd>
+    </dl>
+    <h3>What the code does</h3>
+    <p><code class="path">src/app/core/severity.ts</code>:</p>
+    <ul>
+      <li><code>severityFromCvss3</code> — thresholds validated against the backend's NVD-imported severity strings: None ≤ 0, Low &lt; 4, Medium &lt; 7, High &lt; 9, Critical ≥ 9.</li>
+      <li><code>severityFromCvss2</code> — same scale but <strong>no Critical tier</strong>: High starts at ≥ 7.</li>
+      <li><code>canonicalSeverity("HIGH") → "High"</code>; unknown, empty, or missing → <code>null</code>.</li>
+      <li><code>resolveCvssSeverity</code> — prefers the API's severity string; falls back to the threshold function when the string is missing but the score is present.</li>
+    </ul>
+    <p>The Vulnerabilities page (and CVE detail) renders the <strong>Severity badge</strong> with the v2-or-v3 preference and, when neither CVSS block has a score, a neutral "Not scored" chip — the end of the fallback chain, never an error.</p>
+    <h3>Likely probe</h3>
+    <blockquote><strong>"Where do the threshold rules live?"</strong> — In one pure module, documented against the backend's string conventions, with <code>severityBadgeClass</code> as the only place that maps a severity <em>name</em> to a color token — "which red is Critical" is a one-line change.</blockquote>
+
+    <!-- ===================== Theme 8 ===================== -->
+    <h2>Theme: Router &amp; composition patterns</h2>
+    <dl class="case">
+      <dt>What to say</dt>
+      <dd>"Standalone everything, inline templates where colocation helps, built-in control flow, and query-param-to-<code>input()</code> binding — the router hands the page its state, and the page never reads the router object directly to get it."</dd>
+    </dl>
+    <h3>Patterns to name and demonstrate</h3>
+    <ul>
+      <li><strong>Standalone components with inline templates</strong> (the Vulnerabilities page) — one file colocates template, parse functions, and component; larger pages and the shell use separate template files. Colocation is a per-page judgment, not doctrine.</li>
+      <li><strong>Built-in control flow</strong>: <code>@if (expr; as alias)</code> for unwrapping without null-juggling in the template; <code>@for</code> with identity-based <code>track cve.cveId</code> — never index tracking, CVE IDs are the natural key.</li>
+      <li><strong>URL → inputs</strong>: <code>withComponentInputBinding()</code> (+ path params for the vendor/product routes) means the page is a pure function of its URL; no <code>ActivatedRoute.snapshot</code> spelunking.</li>
+      <li><strong>Interop at the boundary</strong>: the app shell turns router events into a section-title signal with <code>toSignal(router.events.pipe(filter, map, startWith))</code> (<code class="path">src/app/app.ts</code>). RxJS lives at event streams; signals live inside components — a stated split, not an accident.</li>
+      <li><strong>Guards against drift</strong>: URL values are parsed through whitelist functions before they reach the API layer — the page never forwards a raw <code>count</code> or unknown <code>sort</code> downstream.</li>
+    </ul>
+    <h3>Likely probe</h3>
+    <blockquote><strong>"Why inline templates for the list page?"</strong> — Its rendering branches (loading / not-found / error / rows / pager) are one narrative unit; splitting them into five files makes reviewing the state machine harder than writing it inline. Craft, not fashion.</blockquote>
+
+    <!-- ===================== Theme 9 ===================== -->
+    <h2>Theme: Tailwind 4 <code>@theme</code> design tokens</h2>
+    <dl class="case">
+      <dt>What to say</dt>
+      <dd>"The design language is light content area plus a dark indigo sidebar. Tokens are declared once in <code>@theme</code> — CSS variables, no Tailwind config file — and consumed as utilities or <code>var()</code> references anywhere."</dd>
+    </dl>
+    <h3>What the code does</h3>
+    <p><code class="path">src/styles.css</code> declares the palette:</p>
+    <pre><code>@theme {
+  --color-nav-bg: #191934;          /* dark indigo sidebar */
+  --color-brand: #5c53e0;
+  --color-page-bg: #eef0f4;
+  --color-card-border: #e3e4ea;
+  --color-panel-accent: #33306b;
+  --color-severity-low: #00b8d9;    /* + medium / high / critical / none */
+}</code></pre>
+    <p>Consumption is uniform:</p>
+    <ul>
+      <li><strong>Arbitrary values</strong> in templates — <code>bg-[var(--color-brand)]</code>, <code>border-[var(--color-card-border)]</code>, <code>hover:border-[var(--color-brand)]</code> — so markup references tokens, not hex.</li>
+      <li><strong>The one name→color mapping</strong> — <code>severityBadgeClass()</code> in <code class="path">src/app/core/severity.ts</code> maps each severity to its token class, keeping palette changes single-point.</li>
+      <li><strong>Base typography via <code>@apply</code></strong> — <code>html { @apply text-slate-800 antialiased; }</code> — design utilities over raw CSS in globals.</li>
+    </ul>
+    <h3>Likely probe</h3>
+    <blockquote><strong>"Why <code>@theme</code> over a config file?"</strong> — Tailwind 4 is CSS-first: the tokens are the CSS variables themselves and can be scoped or changed without a build-config indirection; utilities derive from the same source of truth the components read.</blockquote>
+
+    <div class="pager">
+      <a href="decisions-testing.html">← 2 · Decisions &amp; testing</a>
+      <a href="synthesis.html">Next: 4 · Synthesis →</a>
+    </div>
+  </main>
+</div>
+</body>
+</html>

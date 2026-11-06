@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>1 · Architecture core — CveUI Interview Prep</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <h1>CveUI Interview Prep</h1>
+    <p class="subtitle">Themes from the Angular SPA, grounded in the code</p>
+    <a href="index.html">Guide home</a>
+    <a href="architecture-core.html" aria-current="page">1 · Architecture core</a>
+    <a href="decisions-testing.html">2 · Decisions &amp; testing</a>
+    <a href="craft.html">3 · Implementation craft</a>
+    <a href="synthesis.html">4 · Synthesis</a>
+  </nav>
+  <main>
+    <header>
+      <h1>1 · Architecture core</h1>
+      <p>State ownership, the reactive data layer, and the clamp effect — the three themes every later theme assumes.</p>
+    </header>
+
+    <!-- ===================== Theme 1 ===================== -->
+    <h2>Theme: Signals-first state ownership</h2>
+    <dl class="case">
+      <dt>What to say</dt>
+      <dd>"State is split by ownership: the URL for listing state, signals for derived and ephemeral state, <code>localStorage</code> for Recent lookups. There's no global store — the URL <em>is</em> the store for anything shareable, per ADR 0002."</dd>
+    </dl>
+    <h3>What the code does</h3>
+    <p>On the Vulnerabilities page, every listing param — <code>vendor</code>, <code>product</code>, <code>q</code>, <code>page</code>, <code>count</code>, <code>sort</code>, <code>direction</code> — is a plain <code>input&lt;string&gt;()</code> bound straight from the URL query params by <code>withComponentInputBinding()</code> (<code class="path">src/app/app.config.ts</code>). The page holds none of it itself (ADR 0002: "in-page-only state is a violation of this record").</p>
+    <p>Derived state is pure <code>computed()</code> from those inputs: parse-and-guard functions (<code class="path">src/app/pages/cve-list.page.ts</code>, <code class="path">parsePage</code>/<code class="path">parsePageSize</code>/<code class="path">parseSortField</code>) coerce any malformed or out-of-set URL value back to a default, so a hand-edited URL like <code>count=999</code> degrades to 25 instead of erroring — the API would 400 on values the page never sends.</p>
+    <p><strong>Recent lookups</strong> is a signal seeded from <code>localStorage</code> (<code class="path">src/app/core/recent-lookups.ts</code>): IDs are normalized, deduplicated, capped at the last five — and both read and write are wrapped in <code>try</code>/<code>catch</code> so disabled storage or privacy modes degrade silently to empty history. Failed lookups never reach it.</p>
+    <h3>Likely probes</h3>
+    <blockquote><strong>"Why no NgRx?"</strong> — The state topology is shallow: server data (owned by <code>httpResource</code>), URL state (owned by the router), browser-local state (one signal). A store would duplicate the URL, and ADR 0002 forbids exactly that: "any new listing state must land in the URL first".</blockquote>
+    <blockquote><strong>"What's the risk of URL-as-state?"</strong> — Caps on param length (mitigated: every param is a short scalar), and the param grammar becomes a public contract (mitigated: strict typed parsers whitelist <code>sort</code> to <code>'published' | 'modified'</code> and <code>count</code> to the page-size set).</blockquote>
+
+    <!-- ===================== Theme 2 ===================== -->
+    <h2>Theme: The <code>httpResource</code> data layer</h2>
+    <dl class="case">
+      <dt>What to say</dt>
+      <dd>"Data fetching is <code>httpResource</code> with a computed request getter; returning <code>undefined</code> idles the resource — no request is ever issued for a state that doesn't need data. Exactly one listing request and one count request are ever live."</dd>
+    </dl>
+    <h3>What the code does</h3>
+    <p><code class="path">src/app/core/api/http-resource.ts</code> wraps <code>httpResource()</code> in <code>runInInjectionContext</code>: <code>httpResource</code> throws <code>NG0203</code> outside an injection context, and this wrapper is what lets API-facade <em>services</em> — not just components — create resources.</p>
+    <p><code class="path">src/app/core/api/cve.api.ts</code> is a set of typed facades:</p>
+    <ul>
+      <li><code>searchByProduct</code> — vendor+product scope, path-segment encoded (vendor names and Keywords contain spaces and slashes).</li>
+      <li><code>list</code> — a discriminated union <code>{ kind: 'all' }</code> vs <code>{ kind: 'keyword'; keyword }</code> decides between the global and keyword endpoints.</li>
+      <li>counts, detail, last-published / last-modified — each a resource with its own getter.</li>
+    </ul>
+    <p>On the Vulnerabilities page two listing resources exist (<code>productResults</code>, <code>unscopedResults</code>), but the inactive one's getter returns <code>undefined</code> and its Filters do not change, so only the active mode ever generates a request. The same trick keeps the two count resources idle except for the active mode — and the count refetches only when the Result set changes, never on page turns.</p>
+    <h3>Likely probes</h3>
+    <blockquote><strong>"Resource vs Observable vs async pipe?"</strong> — Resources are stateful and signal-native: <code>isLoading()</code>, <code>error()</code>, <code>value()</code> map one-to-one onto the template's four-way render branch (loading / vendor-product-not-found / failed to load / list). No subscription management, no <code>async</code> pipe, no manual flag soup.</blockquote>
+    <blockquote><strong>"Who validates page params?"</strong> — A documented split: the backend owns validation (a 400 on out-of-range values, per the comment in <code class="path">cve.api.ts</code>), the page owns sending well-formed values (page-size whitelist, clamped page numbers).</blockquote>
+
+    <!-- ===================== Theme 3 ===================== -->
+    <h2>Theme: The <code>effect()</code> + <code>untracked()</code> page clamp</h2>
+    <dl class="case">
+      <dt>What to say</dt>
+      <dd>"An effect clamps the URL page back into range when a re-sort or smaller page size shrinks the Result set below the current page. <code>total</code> is its only dependency; the page descriptors are read with <code>untracked</code> so changing <em>those</em> doesn't re-trigger the clip — they already refetch through the computed request params, and re-writing the URL from an effect that also reads it would ping-pong."</dd>
+    </dl>
+    <h3>What the code does</h3>
+    <pre><code>// src/app/pages/cve-list.page.ts — the clamp effect
+effect(() =&gt; {
+  const total = this.total();          // dependency: the fetched count
+  if (total === undefined) return;
+  const count = untracked(this.pageSize);
+  const page  = untracked(this.pageNumber);
+  const last = lastPageOf(total, count);
+  if (page &gt; last) this.patchQueryParams({ page: last });
+});</code></pre>
+    <p>This is a <em>reaction</em>, not a derivation: an HTTP response changes a value that forces the router URL to change. Effects are the sanctioned tool for side-effect-on-change; <code>untracked</code> prevents dependency explosion. That vocabulary — tracked vs untracked reads, effects as the side-effect boundary — is exactly what signal-era interviewers probe.</p>
+    <h3>Likely probe</h3>
+    <blockquote><strong>"Why not a computed or a store?"</strong> — A computed can only produce a value, not write back to the URL; a store would duplicate state. The effect writes once, the new URL re-binds the inputs, and the cycle terminates — a deliberate single writer at the router boundary.</blockquote>
+    <h3>The keyword submit, in the same narrative</h3>
+    <p><code class="path">submitSearch()</code> (Vulnerabilities page) lands the new Keyword in the URL via <code>router.navigate([], { queryParams, queryParamsHandling: 'merge' })</code>. Passing <code>null</code> for a query param <em>removes</em> it — the basis of "a new Keyword resets <code>page</code> to 1, but sort and page-size changes keep the page" from ADR 0002. Note the Keyword match semantics (case-insensitive substring) live API-side; the UI only owns the submit-to-URL flow.</p>
+
+    <div class="pager">
+      <a href="index.html">← Guide home</a>
+      <a href="decisions-testing.html">Next: 2 · Decisions &amp; testing →</a>
+    </div>
+  </main>
+</div>
+</body>
+</html>

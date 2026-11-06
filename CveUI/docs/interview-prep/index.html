@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CveUI Interview Prep — Guide</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <h1>CveUI Interview Prep</h1>
+    <p class="subtitle">Themes from the Angular SPA, grounded in the code</p>
+    <a href="index.html" aria-current="page">Guide home</a>
+    <a href="architecture-core.html">1 · Architecture core</a>
+    <a href="decisions-testing.html">2 · Decisions &amp; testing</a>
+    <a href="craft.html">3 · Implementation craft</a>
+    <a href="synthesis.html">4 · Synthesis</a>
+  </nav>
+  <main>
+    <header>
+      <h1>CveUI Interview Prep Guide</h1>
+      <p>A full-stack (.NET + Angular) interview study guide built top-to-bottom from the CveUI codebase — every claim anchored to real files, every decision tied to its recorded ADR rationale.</p>
+    </header>
+
+    <h2>How to use this guide</h2>
+    <p>Each page is one study theme group. Start with <strong>Architecture core</strong>: it establishes the state topology and the two patterns (resource idling, the page clamp) that every later theme assumes. The <strong>Decisions &amp; testing</strong> page is your differentiator material; the <strong>Implementation craft</strong> page covers the remaining code-grounded themes; <strong>Synthesis</strong> closes with the cross-cutting full-stack answers and the three-minute opening narrative.</p>
+
+    <h2>The system in one paragraph</h2>
+    <p>CveUI is the read-only Angular SPA that browses the CVE Search API. It holds no server-side state and treats URLs as the browsable source of truth for list state: refresh, back/forward, and deep links all restore state because only the URL carries it. State is split by ownership — the URL owns all listing state, signals own derived and ephemeral state, and the browser's <code>localStorage</code> owns <strong>Recent lookups</strong>. There is no global store; the URL <em>is</em> the store for anything shareable.</p>
+
+    <h2>Version anchors</h2>
+    <p>Name the versions before anyone asks — running on current majors is a deliberate bet:</p>
+    <table>
+      <tr><th>Tool</th><th>Version</th><th>Why it matters in an interview</th></tr>
+      <tr><td>Angular</td><td>22 (standalone, zoneless)</td><td><code>httpResource</code> is brand-new — betting on the current major is a stated decision</td></tr>
+      <tr><td>TypeScript</td><td>6</td><td>current major; discriminated unions power the request shapes</td></tr>
+      <tr><td>Tailwind CSS</td><td>4</td><td><code>@theme</code> CSS-first design tokens, no config file</td></tr>
+      <tr><td>Testing</td><td>Vitest + jsdom</td><td>integration tests through the app shell, one seam</td></tr>
+      <tr><td>Package manager</td><td>npm 11 (pinned)</td><td>reproducible installs via <code>packageManager</code></td></tr>
+    </table>
+
+    <h2>Glossary — use these words</h2>
+    <p>In the interview, use the project's own vocabulary so your phrasing matches the code and docs: <strong>Vulnerabilities page</strong> (the default CVE list view), <strong>CVE lookup</strong> (opening a single CVE by exact ID), <strong>Global CVE search</strong> (the same list page, unscoped), <strong>Weaknesses page</strong> (the CWE list), <strong>Vendors &amp; Products</strong> (drill-down navigation), <strong>Keyword</strong> (a single submitted search phrase — never "live search"), <strong>Result set</strong> (one count request serves all page turns of the same match), <strong>Severity badge</strong> (the color-classified CVSS chip), <strong>Recent lookups</strong> and the <strong>Recent lookup chip</strong>.</p>
+
+    <div class="pager">
+      <span></span>
+      <a href="architecture-core.html">Next: 1 · Architecture core →</a>
+    </div>
+  </main>
+</div>
+</body>
+</html>

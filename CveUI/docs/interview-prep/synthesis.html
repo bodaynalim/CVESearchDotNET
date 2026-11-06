@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4 · Synthesis — CveUI Interview Prep</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <h1>CveUI Interview Prep</h1>
+    <p class="subtitle">Themes from the Angular SPA, grounded in the code</p>
+    <a href="index.html">Guide home</a>
+    <a href="architecture-core.html">1 · Architecture core</a>
+    <a href="decisions-testing.html">2 · Decisions &amp; testing</a>
+    <a href="craft.html">3 · Implementation craft</a>
+    <a href="synthesis.html" aria-current="page">4 · Synthesis</a>
+  </nav>
+  <main>
+    <header>
+      <h1>4 · Synthesis</h1>
+      <p>Full-stack passing lanes, the three-minute opening narrative, and the rapid-fire defaults — then the guide is complete.</p>
+    </header>
+
+    <!-- ===================== Theme 10 ===================== -->
+    <h2>Theme: Full-stack camera passes</h2>
+    <dl class="case">
+      <dt>What to say</dt>
+      <dd>"The SPA is read-only and holds no server-side state; it treats URLs as the browsable source of truth. Where a full-stack interviewer pulls a thread across the stack, I can answer from the UI half without stretching out of scope."</dd>
+    </dl>
+    <h3>Threads a full-stack interviewer pulls</h3>
+    <ul>
+      <li><strong>camelCase wire contract</strong> — payloads are camelCase stack-wide; the UI treats it as the contract (ADR 0001's cross-reference with the API-side decision), no client-side snake_case adapters. If asked why: one naming convention from MongoDB backend to rendered Angular template.</li>
+      <li><strong>Error semantics at the seam</strong> — the UI distinguishes 404 ("vendor/product pair not found") from other failures ("Failed to load CVEs"), shaped via the not-found interceptor wired in <code class="path">src/app/app.config.ts</code>. Error classes are decided at the boundary, not guessed per template.</li>
+      <li><strong>Keyword semantics live API-side</strong> — case-insensitive substring matching is defined in the .NET API; the interface only own the submitted-Keyword-to-URL flow. State it plainly: "matching is defined API-side; the page only carries the Keyword."</li>
+      <li><strong>Read-only topology</strong> — the tool never writes to the server; pagination state per a Result set stays consistent because one count request serves every page turn of the same Result set, and list state lives in the URL.</li>
+    </ul>
+    <h3>Likely probe</h3>
+    <blockquote><strong>"What happens on refresh mid-search?"</strong> — Nothing is lost: every listing param is in the URL, the inputs rebind, the resources refetch. That single answer demonstrates the whole state topology from page one.</blockquote>
+
+    <!-- ===================== Theme 11 ===================== -->
+    <h2>The three-minute opening narrative</h2>
+    <p>When asked "describe this system," walk the Vulnerabilities page end-to-end. Five beats:</p>
+    <ol>
+      <li><strong>Topology</strong> — "Read-only Angular SPA over a CVE Search API. No server-side state. The URL is the source of truth for all list state — refresh, back/forward, deep links restore everything."</li>
+      <li><strong>Inputs</strong> — "Query params bind directly as component inputs via <code>withComponentInputBinding</code> — the page is a pure function of its URL."</li>
+      <li><strong>Guards</strong> — "Computed parse functions whitelist and clamp every value before it travels — a malformed URL degrades to defaults, and the API never sees an out-of-set <code>count</code> or <code>sort</code>."</li>
+      <li><strong>Data</strong> — "<code>httpResource</code> facades with getters that return <code>undefined</code> to idle: exactly one listing and one count request live at a time; the count serves all page turns of a Result set."</li>
+      <li><strong>Reactions</strong> — "One effect uses the fetched total to clip the URL page back into range, reading the page descriptors <code>untracked</code> to avoid a write-read cycle. Tests boot the real shell with only HTTP stubbed — one seam."</li>
+    </ol>
+    <p>That answer touches signals, resources, routing, testing, and validation in three minutes — and every sentence has a page of backup in this guide.</p>
+
+    <!-- ===================== Theme 12 ===================== -->
+    <h2>Rapid-fire defaults</h2>
+    <p>Short answers to the probes that come with no follow-up:</p>
+    <dl class="case">
+      <dt>Zoneless?</dt>
+      <dd>Yes — no zone.js; scheduler work runs in macrotasks; tests call <code>autoDetectChanges()</code> and flush requests before <code>whenStable()</code>.</dd>
+      <dt>RxJS or signals?</dt>
+      <dd>Signals inside components; RxJS only at event-stream boundaries, bridged with <code>toSignal</code> (shell title) and <code>httpResource</code> under the hood for data.</dd>
+      <dt>State store?</dt>
+      <dd>No global store. URL owns listing state (ADR 0002); signals own derived and browser-local state; <code>localStorage</code> is wrapped in try/catch on both read and write (privacy modes degrade to empty history).</dd>
+      <dt>Testing stack?</dt>
+      <dd>Vitest + jsdom, one HTTP-boundary seam via a <code>bootApp()</code> helper that ships production DI providers with only the backend swapped; stubbed payloads are camelCase to encode the wire contract.</dd>
+      <dt>Why current majors?</dt>
+      <dd><code>httpResource</code>, built-in control flow signals, and zoneless are all recent — betting on Angular 22 / TS 6 / Tailwind 4 was deliberate, and the guide names that bet to show it was made knowingly.</dd>
+    </dl>
+
+    <h2>Closing</h2>
+    <p class="muted">Guide complete. Every theme is anchored to the codebase, every decision to its ADR, and every phrase to the glossary. Before the interview: re-read page 1's two code snippets and the ADR rejected-alternatives on page 2 — those two rehearsals carry most of the value.</p>
+
+    <div class="pager">
+      <a href="craft.html">← 3 · Implementation craft</a>
+      <a href="index.html">Guide home</a>
+    </div>
+  </main>
+</div>
+</body>
+</html>
