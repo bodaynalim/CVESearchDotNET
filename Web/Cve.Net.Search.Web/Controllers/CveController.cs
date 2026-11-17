@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Cve.Infrastructure.Extensions;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.ViewModels;
+using CVESearch.Mapping;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,12 +18,10 @@ namespace CVESearch.Controllers;
 public class CveController : Controller
 {
     private readonly ICveMongoService _cveMongoService;
-    private readonly IMapper _mapper;
 
-    public CveController(ICveMongoService cveMongoService, IMapper mapper)
+    public CveController(ICveMongoService cveMongoService)
     {
         _cveMongoService = cveMongoService;
-        _mapper = mapper;
     }
 
     /// <summary>
@@ -53,7 +51,7 @@ public class CveController : Controller
 
         var cves = await _cveMongoService.GetCveList(vendor, product, count, page, descending, byPublished, cancellationToken);
 
-        return Ok(cves.Select(c => _mapper.Map<CveViewModel>(c)));
+        return Ok(cves.Select(c => c.ToCveViewModel()));
     }
 
     /// <summary>
@@ -110,7 +108,7 @@ public class CveController : Controller
     {
         var cves = await _cveMongoService.GetCveListAll(count, page, descending, byPublished, cancellationToken);
 
-        return Ok(cves.Select(c => _mapper.Map<CveViewModel>(c)));
+        return Ok(cves.Select(c => c.ToCveViewModel()));
     }
 
     /// <summary>
@@ -151,7 +149,7 @@ public class CveController : Controller
     {
         var cves = await _cveMongoService.GetCveListByKeyword(keyword, count, page, descending, byPublished, cancellationToken);
 
-        return Ok(cves.Select(c => _mapper.Map<CveViewModel>(c)));
+        return Ok(cves.Select(c => c.ToCveViewModel()));
     }
 
     /// <summary>
@@ -170,7 +168,7 @@ public class CveController : Controller
         if (cve == null)
             return NotFound($"{cveId} is not found");
 
-        return Ok(_mapper.Map<CveViewModel>(cve));
+        return Ok(cve.ToCveViewModel());
     }
 
     /// <summary>
@@ -196,7 +194,7 @@ public class CveController : Controller
         if (cve == null)
             return NotFound($"CVE for {vendor} {product} is not found");
 
-        return Ok(_mapper.Map<CveViewModel>(cve));
+        return Ok(cve.ToCveViewModel());
     }
 
     /// <summary>
@@ -222,6 +220,6 @@ public class CveController : Controller
         if (cve == null)
             return NotFound($"CVE for {vendor} {product} is not found");
 
-        return Ok(_mapper.Map<CveViewModel>(cve));
+        return Ok(cve.ToCveViewModel());
     }
 }

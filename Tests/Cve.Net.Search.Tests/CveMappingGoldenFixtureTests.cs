@@ -1,10 +1,9 @@
-using AutoMapper;
-using Cve.Infrastructure.AutoMapper;
 using Cve.Infrastructure.Extensions;
 using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.Database.CveXmlJsonModels.NVDApi.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Domain.ViewModels;
+using CVESearch.Mapping;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Xunit;
@@ -19,7 +18,7 @@ namespace Cve.Net.Search.Tests;
 /// element captured from the real NVD API 2.0 endpoint
 /// https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-1999-0001 (pretty-printed only,
 /// no values edited). The expected domain objects below were authored by hand from the mapping
-/// rules in <see cref="ToMongoModelExtensions"/> and <see cref="VulnerabilitiesProfile"/> —
+/// rules in <see cref="ToMongoModelExtensions"/> and <see cref="CVESearch.Mapping.CveMappingExtensions"/> —
 /// they are NOT snapshots of the current output. If one of these tests fails with a specific
 /// field difference, the mapping (or its rules) has changed and the golden expectation must be
 /// reviewed deliberately.
@@ -36,9 +35,6 @@ namespace Cve.Net.Search.Tests;
 public class CveMappingGoldenFixtureTests
 {
     private const string FixtureRelativePath = "Fixtures/cve-golden-nvd-api.json";
-
-    private static IMapper CreateMapper() =>
-        new MapperConfiguration(cfg => cfg.AddProfile<VulnerabilitiesProfile>()).CreateMapper();
 
     private static CveItemNewApi LoadGoldenCve()
     {
@@ -293,7 +289,7 @@ public class CveMappingGoldenFixtureTests
         };
 
         var mongoModel = MapGoldenCveToMongoModel();
-        var viewModel = CreateMapper().Map<CveViewModel>(mongoModel);
+        var viewModel = mongoModel.ToCveViewModel();
 
         viewModel.Should().BeEquivalentTo(expected, "the golden NVD payload must reach the view model as hand-written");
     }
@@ -303,7 +299,7 @@ public class CveMappingGoldenFixtureTests
     {
         // Same pipeline the import jobs run: NVD JSON → mongo model → view model.
         var (mongoModel, _) = LoadGoldenCve().ToCveMongoModel();
-        var viewModel = CreateMapper().Map<CveViewModel>(mongoModel);
+        var viewModel = mongoModel.ToCveViewModel();
 
         viewModel.CveId.Should().Be("CVE-1999-0001");
         viewModel.Cwes.Should().Equal("CWE-20");

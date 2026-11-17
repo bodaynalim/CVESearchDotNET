@@ -1,8 +1,7 @@
-using AutoMapper;
-using Cve.Infrastructure.AutoMapper;
 using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Domain.ViewModels;
+using CVESearch.Mapping;
 using FluentAssertions;
 using Xunit;
 
@@ -10,8 +9,6 @@ namespace Cve.Net.Search.Tests;
 
 public class CveMappingTests
 {
-    private static IMapper CreateMapper() => new MapperConfiguration(cfg => cfg.AddProfile<VulnerabilitiesProfile>()).CreateMapper();
-
     [Fact]
     public void Cve_WithOnlyCvss31_FallsBackToCvss31InViewModel()
     {
@@ -22,7 +19,7 @@ public class CveMappingTests
             Cvss31 = new CvssThree { Version = "3.1", BaseScore = 7.5, BaseSeverity = "HIGH" },
         };
 
-        var vm = CreateMapper().Map<CveViewModel>(source);
+        var vm = source.ToCveViewModel();
 
         vm.Cvss3.Should().NotBeNull();
         vm.Cvss3!.BaseScore.Should().Be(7.5);
@@ -39,7 +36,7 @@ public class CveMappingTests
             Cvss31 = new CvssThree { Version = "3.1", BaseScore = 8.5, BaseSeverity = "HIGH" },
         };
 
-        var vm = CreateMapper().Map<CveViewModel>(source);
+        var vm = source.ToCveViewModel();
 
         vm.Cvss3!.BaseScore.Should().Be(9.0);
     }
@@ -54,7 +51,7 @@ public class CveMappingTests
             Cvss31 = new CvssThree { Version = "3.1", BaseScore = 7.5, BaseSeverity = "HIGH" },
         };
 
-        var vm = CreateMapper().Map<CveViewModel>(source);
+        var vm = source.ToCveViewModel();
 
         vm.Cvss3.Should().NotBeNull();
         vm.Cvss3!.BaseScore.Should().Be(7.5);
@@ -63,7 +60,7 @@ public class CveMappingTests
     [Fact]
     public void Cve_WithNoCvssAtAll_MapsNull()
     {
-        var vm = CreateMapper().Map<CveViewModel>(new CveMongoModel { CveId = "CVE-Y" });
+        var vm = new CveMongoModel { CveId = "CVE-Y" }.ToCveViewModel();
 
         vm.Cvss3.Should().BeNull();
         vm.Cvss2.Should().BeNull();
@@ -81,7 +78,7 @@ public class CveMappingTests
             Cvss31 = new CvssThree { Version = "3.1", BaseScore = 6.5, BaseSeverity = "HIGH" },
         };
 
-        var vm = CreateMapper().Map<CveViewModel>(source);
+        var vm = source.ToCveViewModel();
 
         vm.Cvss3!.Version.Should().Be("3.1");
         vm.Cvss3.BaseScore.Should().Be(6.5);
@@ -101,9 +98,30 @@ public class CveMappingTests
             },
         };
 
-        var vm = CreateMapper().Map<CveViewModel>(source);
+        var vm = source.ToCveViewModel();
 
         vm.Cwes.Should().Equal("CWE-502", "CWE-78", "CWE-20");
+    }
+
+    [Fact]
+    public void Cve_Cwes_WeaknessWithoutDescription_ContributesNoIds()
+    {
+        // Non-trivial rule: ToMongoModelExtensions can emit a ProblemData with a null Cwes
+        // array (an NVD weakness lacking descriptions). It must contribute no CWE ids,
+        // not crash the mapping — regression for the endpoint-breaking null.
+        var source = new CveMongoModel
+        {
+            CveId = "CVE-Z",
+            Cwes = new[]
+            {
+                new ProblemData { Cwes = new[] { "CWE-79" } },
+                new ProblemData { Cwes = null },
+            },
+        };
+
+        var vm = source.ToCveViewModel();
+
+        vm.Cwes.Should().Equal("CWE-79");
     }
 
     [Fact]
@@ -119,7 +137,7 @@ public class CveMappingTests
             },
         };
 
-        var vm = CreateMapper().Map<CveViewModel>(source);
+        var vm = source.ToCveViewModel();
 
         // Non-trivial rule: only Url is projected (Name/Refsource/Tags are dropped),
         // in the payload order — NOT re-sorted.
@@ -138,7 +156,7 @@ public class CveMappingTests
             },
         };
 
-        var vm = CreateMapper().Map<CveViewModel>(source);
+        var vm = source.ToCveViewModel();
 
         // Non-trivial rule: the version-range properties are dropped, only the URI stays.
         vm.VulnerableConfigurations.Should().Equal("cpe:2.3:a:acme:widget:1.0:*:*:*:*:*:*:*");
