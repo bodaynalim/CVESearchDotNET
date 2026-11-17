@@ -1,8 +1,8 @@
 using AutoMapper;
+using Cve.Infrastructure.AutoMapper;
 using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Domain.ViewModels;
-using Cve.Infrastructure.AutoMapper;
 using FluentAssertions;
 using Xunit;
 

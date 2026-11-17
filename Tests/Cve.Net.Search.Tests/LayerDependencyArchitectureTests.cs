@@ -1,10 +1,10 @@
-using FluentAssertions;
 using Cve.Infrastructure.AutoMapper;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Domain.ViewModels;
 using CVESearch.Controllers;
+using FluentAssertions;
 using Xunit;
 
 namespace Cve.Net.Search.Tests;

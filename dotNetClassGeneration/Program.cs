@@ -1,7 +1,7 @@
-using NJsonSchema;
-using NJsonSchema.CodeGeneration.CSharp;
 using System.IO;
 using System.Threading.Tasks;
+using NJsonSchema;
+using NJsonSchema.CodeGeneration.CSharp;
 
 namespace dotNetClassGeneration;
 

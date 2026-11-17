@@ -16,6 +16,8 @@ jobs:
         run: dotnet build Cve.Net.Search.sln --nologo
       - name: backend tests
         run: dotnet test Tests/Cve.Net.Search.Tests --nologo
+      - name: editorconfig compliance (T13)
+        run: dotnet format --verify-no-changes --severity warn
 
   cveui:
     runs-on: ubuntu-latest

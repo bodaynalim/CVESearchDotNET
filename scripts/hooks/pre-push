@@ -1,0 +1,6 @@
+#!/bin/sh
+# pre-push hook (tickets T09 + T13): the full preflight must pass before any push,
+# regardless of whether a human or an agent pushes. Nothing lands on the remote
+# that did not pass build/tests/doc-links/editorconfig locally.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(git rev-parse --show-toplevel)/scripts/preflight.ps1" "$@"
+exit $?

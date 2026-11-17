@@ -3,12 +3,12 @@ using Cve.Infrastructure.AutoMapper;
 using Cve.Infrastructure.Extensions;
 using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.Database.CveXmlJsonModels.NVDApi.Cve;
-using Cve.Net.Search.Domain.ViewModels;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
-using Reference = Cve.Net.Search.Domain.Database.MongoModels.Cve.Reference;
+using Cve.Net.Search.Domain.ViewModels;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Xunit;
+using Reference = Cve.Net.Search.Domain.Database.MongoModels.Cve.Reference;
 
 namespace Cve.Net.Search.Tests;
 
