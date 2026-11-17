@@ -43,3 +43,25 @@ KeywordFilterBuilderTests (стиль юніт-тестів), Cve.Net.Search.Tes
 
 - Зміна семантики пошуку (тільки через ADR-0002)
 - CI job `evals` (T07) та живий API (T11)
+
+## Implementation notes
+
+- Shipped as unit-level golden tests only: `KeywordGoldenDataset.cs` (fixture) +
+  `KeywordGoldenDatasetTests.cs` in `Tests/Cve.Net.Search.Tests`.
+- **Integration layer deferred**: the codebase has no Mongo-free integration seam for the
+  search repository. `CveMongoService`/`CweMongoService` take a live `IMongoCollection<T>`
+  (constructor-injected via `BaseMongoService<T>`); the existing
+  `VulnerabilitiesJsonHelperInitialImportTests` seam stubs Mongo *services* with NSubstitute,
+  which verifies import orchestration but cannot execute real filters against a dataset.
+  Standing up MongoDB (testcontainers/ephemeral server) is a separate change. Until then the
+  golden cases run through the production `KeywordFilterBuilder` filter, rendered to Bson and
+  evaluated against the fixture records with the rendered per-field regexes — the observable
+  substring-matching behaviour, so the same dataset and expectations are what an integration
+  test will consume when the seam exists.
+- Empty-keyword contract pinned: the CVE search routes reject empty/null keywords via
+  `[Required][MinLength(1)]`; the empty string filter itself matches everything (substring
+  semantics); `null` throws `ArgumentNullException` (CWE's nullable-keyword path bypasses the
+  builder entirely with `Filter.Empty`).
+- Dataset: 24 CVE records, 22 positive cases, 6 negative cases. Expected results are
+  hand-written; a fixture-integrity test additionally requires every record to be reachable
+  by at least one golden case and ids to be unique.
