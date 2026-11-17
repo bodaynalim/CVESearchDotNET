@@ -3,6 +3,17 @@
 ###############################################################################
 * text=auto
 
+# .editorconfig requires CRLF for source files; eol=crlf guarantees every
+# checkout (Windows, CI, WSL) materializes CRLF, so `dotnet format
+# --verify-no-changes` is checkout-independent (ticket T13).
+*.cs   text eol=crlf
+*.csproj text eol=crlf
+*.props text eol=crlf
+*.sln  text eol=crlf
+*.json text eol=crlf
+*.yaml text eol=crlf
+*.yml  text eol=crlf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
