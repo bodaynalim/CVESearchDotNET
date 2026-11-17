@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Runs the full local verification pipeline:
-      1. Editorconfig compliance  (-Fix: auto-fix instead of verify-only)
+      1. Editorconfig compliance  (-SkipEditorconfig: omitted; pre-commit hook covers it)
       2. Solution build            (warnings-as-errors per Directory.Build.props)
       3. Test suite
       4. Doc-link check
@@ -18,6 +18,9 @@
 .PARAMETER SkipTests
     Skip the test suite (fast pass for iterative commits; never use for push).
 
+.PARAMETER SkipEditorconfig
+    Skip the editorconfig verify step (the pre-commit hook already runs it).
+
 .EXAMPLE
     ./scripts/preflight.ps1            # full gate
     ./scripts/preflight.ps1 -Fix       # auto-fix formatting, then full gate
@@ -25,7 +28,8 @@
 #>
 param(
     [switch]$Fix,
-    [switch]$SkipTests
+    [switch]$SkipTests,
+    [switch]$SkipEditorconfig
 )
 
 # Native tools' stderr redirect (2>&1) raises non-terminating errors under PS 5.1 +
@@ -38,14 +42,17 @@ function Step($name) { Write-Host "`n=== $name ===" -ForegroundColor Cyan }
 
 $failed = @()
 
-# 1. Editorconfig (T13): auto-fix locally, verify-only otherwise.
-Step 'editorconfig'
-if ($Fix) {
-    dotnet format --include '*.cs'
+# 1. Editorconfig (T13): pre-commit hook is the primary gate; pre-push passes
+#    -SkipEditorconfig. Auto-fix only with -Fix (local, pre-commit).
+if (-not $SkipEditorconfig) {
+    Step 'editorconfig'
+    if ($Fix) {
+        dotnet format --include '*.cs'
+    }
+    dotnet format --verify-no-changes --severity warn 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { $failed += 'editorconfig (run preflight -Fix locally)'; Write-Host 'FAILED' -ForegroundColor Red }
+    else { Write-Host 'ok' -ForegroundColor Green }
 }
-dotnet format --verify-no-changes --severity warn 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) { $failed += 'editorconfig (run preflight -Fix locally)'; Write-Host 'FAILED' -ForegroundColor Red }
-else { Write-Host 'ok' -ForegroundColor Green }
 
 # 2. Build solution with warnings-as-errors (T01 policy).
 Step 'build'
