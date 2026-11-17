@@ -31,4 +31,4 @@ You are acting as a Senior C# / .NET Software Engineer. This file covers **agent
 
 ## 5. Sanctioned consulting shortcuts you may not take
 
-When unsure, prefer reading these files over guessing: `Web/Cve.Net.Search.Web/Program.cs` (DI wiring), `Infrastructure/.../AutoMapper/VulnerabilitiesProfile.cs` (model mapping rules), `Web/.../Controllers/*` (route style), `Tests/Cve.Net.Search.Tests/*` (test style). Do not invent endpoints, columns, or conventions that don't exist — verify against code first.
+When unsure, prefer reading these files over guessing: `Web/Cve.Net.Search.Web/Program.cs` (DI wiring), `Web/Cve.Net.Search.Web/Mapping/*MappingExtensions.cs` (model mapping rules), `Web/.../Controllers/*` (route style), `Tests/Cve.Net.Search.Tests/*` (test style). Do not invent endpoints, columns, or conventions that don't exist — verify against code first.

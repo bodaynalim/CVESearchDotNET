@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Cve.Application.Helpers;
 using Cve.Application.Services;
-using Cve.Infrastructure.AutoMapper;
 using Cve.Infrastructure.Extensions;
 using Cve.Infrastructure.Helpers;
 using Cve.Infrastructure.Services;
@@ -79,7 +78,6 @@ public class Program
         builder.Services.AddSingleton<IIndexInitializer>(serviceProvider => serviceProvider.GetRequiredService<Cve.Application.Helpers.IInitialImportStateService>());
         builder.Services.AddHostedService<IndexBootstrapper>();
         builder.Services.AddTransient<IVulnerabilitiesJsonHelper, VulnerabilitiesJsonHelper>();
-        builder.Services.AddAutoMapper(typeof(VulnerabilitiesProfile));
         builder.Services.AddHealthChecks();
 
         var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];

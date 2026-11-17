@@ -49,8 +49,7 @@ public class CapecAndVendorMappingTests
     [Fact]
     public void Capec_NullArrays_MapToNull()
     {
-        // Convention: missing collections map to null (never empty arrays) — matches the
-        // null-guarding semantics the AutoMapper profile had.
+        // Convention: missing collections map to null (never empty arrays).
         var vm = new CapecMongoModel { CapecId = "1" }.ToCapecViewModel();
 
         vm.Prerequisites.Should().BeNull();

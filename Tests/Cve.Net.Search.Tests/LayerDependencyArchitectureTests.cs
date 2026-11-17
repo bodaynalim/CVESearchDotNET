@@ -1,4 +1,3 @@
-using Cve.Infrastructure.AutoMapper;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
@@ -45,7 +44,6 @@ public class LayerDependencyArchitectureTests
         (typeof(ICveMongoService), [DomainLayer.Infrastructure, DomainLayer.Web]),
         // Infrastructure implements Application interfaces — referencing Application is allowed
         // (docs/CODING_STANDARDS.md section 8). Web and Application themselves impose no rules.
-        (typeof(VulnerabilitiesProfile), []),
         (typeof(CveController), []),
     };
 

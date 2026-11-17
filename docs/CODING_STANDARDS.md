@@ -16,11 +16,11 @@ These standards apply to the C#/.NET projects in this repository (Application, D
 
 ## 2. Layering (hard)
 
-- **Web** = HTTP contract only. Controllers validate route parameters with attribute annotations (`[Range]`, `[Required]`, `[MinLength]`), call an Application service, map to a ViewModel, return `Ok`/`NotFound`/`BadRequest`. No Mongo, no AutoMapper profiles, no business decisions.
+- **Web** = HTTP contract only. Controllers validate route parameters with attribute annotations (`[Range]`, `[Required]`, `[MinLength]`), call an Application service, map to a ViewModel, return `Ok`/`NotFound`/`BadRequest`. No Mongo, no mapping libraries, no business decisions.
 - **Application** = service interfaces + orchestration. The only place where cross-service workflows live.
-- **Infrastructure** = Mongo services, HTTP/Vulnerabilities import helpers, config binding, AutoMapper profiles. Owns the `BaseMongoService<T>` plumbing.
+- **Infrastructure** = Mongo services, HTTP/Vulnerabilities import helpers, config binding. Owns the `BaseMongoService<T>` plumbing.
 - **Domain** (Common / Database / ViewModels) = plain models and records. No UI, HTTP, or driver logic where avoidable; ViewModels must not leak Mongo draft types.
-- **ViewModel vs Mongo model**: the wire contract (ViewModel) and the persisted shape (Mongo model) are separate types, mapped explicitly. Never return a Mongo model directly from a controller.
+- **ViewModel vs Mongo model**: the wire contract (ViewModel) and the persisted shape (Mongo model) are separate types, mapped explicitly by hand-written extension classes in the Web project's `Mapping` folder — that code is the authoritative record of the wire contract. Never return a Mongo model directly from a controller.
 
 ## 3. REST contract conventions (hard)
 
@@ -73,7 +73,7 @@ These standards apply to the C#/.NET projects in this repository (Application, D
 - Expected conditions (validation, not-found) return status codes via controllers, not exceptions; the repo does **not** use a Result library or RFC 7807 Problem Details middleware.
 - `NotFound` responses include a human-meaningful message ("CWE-{id} is not found"); 400s surface route-validation failures.
 - Return `null`/boolean/plain objects from the service layer for predictable misses; throw only for truly unexpected states.
-- Lambda expressions feeding AutoMapper/query trees cannot contain `?.` (expression trees) — use an explicit null check instead (cf. the CVSS fallback in `VulnerabilitiesProfile`).
+- Lambda-based mapping libraries cannot be used for model mapping — mappings are hand-written extension classes (see below). Plain member projection may use `?.` (plain C#, no expression trees); non-trivial fallback logic uses an explicit null check instead (cf. the CVSS fallback in the CVE mapping extension).
 
 ## 8. Naming & layout
 

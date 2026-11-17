@@ -14,7 +14,6 @@
     <!-- CS1573/CS1591: missing XML docs on public members (projects with GenerateDocumentationFile=true) -->
     <!-- CS8600/CS8601/CS8602/CS8603/CS8604/CS8618/CS8619/CS8625: nullable reference types debt (incl. mass CS8618 on domain models) -->
     <!-- NU1603: transitive resolution mismatch (FluentAssertions pin kept in sync in Tests csproj) -->
-    <!-- NU1903: AutoMapper 13.0.1 has a known high-severity vulnerability (GHSA-rvv3-g6hj-g44x); removal pending -->
     <WarningsNotAsErrors>
       CS1573;
       CS1591;
@@ -26,8 +25,7 @@
       CS8618;
       CS8619;
       CS8625;
-      NU1603;
-      NU1903
+      NU1603
     </WarningsNotAsErrors>
   </PropertyGroup>
 
