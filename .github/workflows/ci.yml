@@ -12,6 +12,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+      - name: build solution (warnings as errors)
+        run: dotnet build Cve.Net.Search.sln --nologo
       - name: backend tests
         run: dotnet test Tests/Cve.Net.Search.Tests --nologo
 

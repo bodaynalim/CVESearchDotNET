@@ -94,9 +94,16 @@ These standards apply to the C#/.NET projects in this repository (Application, D
 - Keeping existing tests green is mandatory; the database is not a test fixture.
 - **Documented bug fixes get a regression test where the logic is pure** (cf. `CveMappingTests` guarding the CVSS3/3.1 fallback).
 
-## 10. Definition of done
+## 10. Build warnings (hard)
 
-- Builds with zero errors; existing suites green.
+- `TreatWarningsAsErrors` is enabled solution-wide via `Directory.Build.props`: any **new** compiler warning fails the build.
+- The only exceptions are the codes listed in `WarningsNotAsErrors` in that file — pre-existing documented debt, tracked for burn-down in `docs/tickets/T14-warning-exception-burndown.md`.
+- Adding a code to `WarningsNotAsErrors` requires an inline comment explaining why and a burn-down item in T14. Silent `NoWarn`/`#pragma` suppression is not allowed.
+- CI builds the whole solution (`dotnet build Cve.Net.Search.sln`) with this policy before running tests.
+
+## 11. Definition of done
+
+- Builds with zero errors and **no new warnings** (see section 10); existing suites green.
 - New public surface documented (XML comments) and following the REST conventions above.
 - Linked GitHub ticket referenced in the commit message; review pass (two-axis or subagent template) before commit.
 - Domain vocabulary/decisions made in passing belong in `GLOSSARY*.md` / `docs/adr/` immediately, not later.

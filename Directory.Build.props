@@ -1,0 +1,34 @@
+<Project>
+
+  <!--
+    Build hardening (ticket T01, docs/tickets/T01-build-hardening.md).
+
+    TreatWarningsAsErrors: any NEW warning breaks the build. The codes listed in
+    WarningsNotAsErrors are documented pre-existing debt (counted 2026-11-17,
+    474 occurrences) tracked for burn-down in docs/tickets/T14-warning-exception-burndown.md.
+    Do NOT add codes to that list without a comment and a corresponding burn-down item.
+  -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- CS1573/CS1591: missing XML docs on public members (projects with GenerateDocumentationFile=true) -->
+    <!-- CS8600/CS8601/CS8602/CS8603/CS8604/CS8618/CS8619/CS8625: nullable reference types debt (incl. mass CS8618 on domain models) -->
+    <!-- NU1603: transitive resolution mismatch (FluentAssertions pin kept in sync in Tests csproj) -->
+    <!-- NU1903: AutoMapper 13.0.1 has a known high-severity vulnerability (GHSA-rvv3-g6hj-g44x); upgrade tracked in T14 -->
+    <WarningsNotAsErrors>
+      CS1573;
+      CS1591;
+      CS8600;
+      CS8601;
+      CS8602;
+      CS8603;
+      CS8604;
+      CS8618;
+      CS8619;
+      CS8625;
+      NU1603;
+      NU1903
+    </WarningsNotAsErrors>
+  </PropertyGroup>
+
+</Project>
