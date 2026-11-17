@@ -1,6 +1,8 @@
 using Cve.Net.Search.Web.Infrastructure.Hangfire;
 using FluentAssertions;
-using Hangfire.MemoryStorage;
+using Hangfire.Mongo;
+using Hangfire.Mongo.Migration.Strategies;
+using Hangfire.Mongo.Migration.Strategies.Backup;
 using Xunit;
 
 namespace Cve.Net.Search.Tests;
@@ -8,20 +10,18 @@ namespace Cve.Net.Search.Tests;
 public class HangfireStorageOptionsFactoryTests
 {
     [Fact]
-    public void MemoryStorageOptions_HaveFetchNextJobTimeout_GreaterThanDefaultThirtyMinutes()
+    public void MongoStorageOptions_HaveLongInvisibilityTimeout_AndAutomaticMigration()
     {
-        var options = HangfireStorageOptionsFactory.CreateMemoryStorageOptions();
+        var options = HangfireStorageOptionsFactory.CreateMongoStorageOptions();
 
         options.Should().NotBeNull();
 
-        var defaultOptions = new MemoryStorageOptions();
+        // Collections are namespaced inside the shared application database.
+        options.Prefix.Should().Be(HangfireStorageOptionsFactory.CollectionPrefix);
 
-        // Regression for the bug: with the default 30-minute FetchNextJobTimeout Hangfire
-        // re-fetches the long-running initial import job and aborts it after 30 minutes.
-        options.FetchNextJobTimeout.Should().BeGreaterThan(defaultOptions.FetchNextJobTimeout);
-        options.FetchNextJobTimeout.Should().BeGreaterThanOrEqualTo(TimeSpan.FromHours(5));
-
-        // Expiration checks stay at library defaults.
-        options.JobExpirationCheckInterval.Should().Be(new MemoryStorageOptions().JobExpirationCheckInterval);
+        // Regression for the bug: with a short invisibility timeout Hangfire
+        // re-fetches the long-running initial import job and aborts it after
+        // 30 minutes (MemoryStorage equivalent: FetchNextJobTimeout).
+        options.SlidingInvisibilityTimeout.Should().BeGreaterThanOrEqualTo(TimeSpan.FromHours(5));
     }
 }

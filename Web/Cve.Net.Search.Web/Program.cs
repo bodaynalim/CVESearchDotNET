@@ -11,7 +11,7 @@ using Cve.Net.Search.Infrastructure.Services.Cve;
 using Cve.Net.Search.Web.GraphQL;
 using Cve.Net.Search.Web.Infrastructure.Hangfire;
 using Hangfire;
-using Hangfire.MemoryStorage;
+using Hangfire.Mongo;
 using Microsoft.OpenApi.Models;
 
 namespace Cve.Net.Search.Web;
@@ -49,9 +49,11 @@ public class Program
 
         builder.Services.AddHangfire(config =>
         {
-            // FetchNextJobTimeout must exceed the longest job (initial DB population takes hours):
-            // default 30 minutes causes Hangfire to re-fetch the job and abort the running execution.
-            config.UseMemoryStorage(HangfireStorageOptionsFactory.CreateMemoryStorageOptions());
+            // Timeout rationale lives in HangfireStorageOptionsFactory (single place for storage options).
+            config.UseMongoStorage(
+                builder.Configuration.GetConnectionString("Mongo"),
+                builder.Configuration.GetValue<string>("DatabaseName"),
+                HangfireStorageOptionsFactory.CreateMongoStorageOptions());
         });
 
         builder.Services.AddHangfireServer(options =>

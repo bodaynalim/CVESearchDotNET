@@ -12,8 +12,8 @@
     <PackageReference Include="Polly" Version="8.7.0" />
     <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.15" />
-    <PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.1" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" />
+    <PackageReference Include="Hangfire.Mongo" Version="1.17.1" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="14.3.2" />
   </ItemGroup>
   <ItemGroup>
