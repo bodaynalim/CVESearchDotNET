@@ -1,0 +1,11 @@
+{
+  "description": "Positive monotonicity fixture: a flushed delta batch judged against stored state — one CVE re-delivered with the same modification date it already has, one brand-new CVE with a forward date. Unchanged/forward dates never move backwards; verdict: no violations.",
+  "cves": [
+    { "cveId": "CVE-2026-0001", "modified": "2026-02-02T00:00:00Z" },
+    { "cveId": "CVE-2026-0002", "modified": "2026-02-03T00:00:00Z" }
+  ],
+  "storedModified": {
+    "CVE-2026-0001": "2026-02-02T00:00:00Z"
+  },
+  "expectedInvariantViolations": []
+}

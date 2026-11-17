@@ -1,4 +1,3 @@
-using System.Text;
 using Cve.Application.Helpers;
 using Cve.Application.Services;
 using Cve.Infrastructure.Helpers;
@@ -15,10 +14,13 @@ using Xunit;
 namespace Cve.Net.Search.Tests;
 
 /// <summary>
-/// Delta-job tests over the same seam as VulnerabilitiesJsonHelperInitialImportTests
-/// (T12): the NVD delta feed is stubbed at the HTTP seam, the Mongo services are
-/// NSubstitutes, and the flushed batches are captured and checked against the T12
-/// data-quality invariants. No Mongo connection is made (AGENTS.md §2).
+/// Fixture-driven delta-job tests over the same seam as
+/// VulnerabilitiesJsonHelperInitialImportTests (T12): every test loads a named
+/// fixture pair under Fixtures/delta-jobs — the input feed is served verbatim at the
+/// stubbed HTTP seam, and the flushed batches are compared against the fixture's
+/// documented expected output (batch sizes, ids, modification dates, vendor
+/// aggregation) and invariant verdict. No Mongo connection is made (AGENTS.md §2);
+/// the narrative is "this fixture input must produce this outcome".
 /// </summary>
 public class VulnerabilitiesJsonHelperDeltaJobTests
 {
@@ -53,159 +55,173 @@ public class VulnerabilitiesJsonHelperDeltaJobTests
 
         _httpClientFactory.CreateClient().Returns(_ => new HttpClient(_httpHandler));
 
-        // The published window returns an empty delta by default; each test stubs the
-        // modified window explicitly.
-        RespondPublished(DeltaJobDataQualityFixtures.EmptyDeltaPayload);
+        // The published window returns an empty delta by default; each fixture pair is
+        // served on the modified window.
+        _httpHandler.RespondPrefix(PublishedApiPrefix, DeltaJobFixtures.ReadDeltaInput("empty-delta"));
     }
 
-    #region Fixture: valid delta input → expected output, all invariants hold
+    #region Fixture: valid-delta — all four invariants hold
 
     [Fact]
-    public async Task LoadCurrentDayCves_WithValidDeltaFixture_FlushesExpectedOutputSatisfyingAllInvariants()
+    public async Task LoadCurrentDayCves_ValidDeltaFixture_ProducesExpectedFlushesWithoutInvariantViolations()
     {
-        RespondModified(DeltaJobDataQualityFixtures.BuildValidDeltaPayload());
-
-        await CreateHelper().LoadCurrentDayCves();
-
-        _flushedCveBatches.Should().HaveCount(1);
-        var batch = _flushedCveBatches.Single();
-
-        // Input → output: both feed entries reach Mongo, in feed order.
-        batch.Select(item => item.CveId).Should()
-            .Equal(DeltaJobDataQualityFixtures.FirstCveId, DeltaJobDataQualityFixtures.SecondCveId);
-
-        batch.Select(item => item.Modified).Should().Equal(
-            DeltaJobDataQualityFixtures.ParseTimestamp(DeltaJobDataQualityFixtures.FirstCveModified),
-            DeltaJobDataQualityFixtures.ParseTimestamp(DeltaJobDataQualityFixtures.SecondCveModified));
-
-        // Ids non-empty and unique within the batch, dedup sound, size sane.
-        DeltaJobInvariants.CheckCveBatch(batch, new Dictionary<string, DateTime>()).Should().BeEmpty();
-
-        // Vendor aggregation dedup: one entry per vendor, softwares collapsed.
-        _flushedVendorBatches.Should().HaveCount(1);
-        var vendorProducts = _flushedVendorBatches.Single();
-
-        vendorProducts.Count.Should().Be(2);
-        vendorProducts.Single(vp => vp.Vendor == "acme").Softwares
-            .OrderBy(s => s).Should().Equal("gadget", "widget");
-        vendorProducts.Single(vp => vp.Vendor == "beta").Softwares
-            .Should().Equal("gadget");
-
-        DeltaJobInvariants.CheckDeduplication(vendorProducts).Should().BeEmpty();
+        await RunDeltaAndVerify("valid-delta");
     }
 
     #endregion
 
-    #region Negative: a deliberately violating feed fails with the invariant's name
+    #region Fixture: duplicate-cve-id-delta — deliberate violation, named invariants
 
     [Fact]
-    public async Task LoadCurrentDayCves_WithDuplicateCveIdInFeed_FailsWithIdsAndDedupInvariantNames()
+    public async Task LoadCurrentDayCves_DuplicateCveIdFixture_FlushesBothAndFailsWithIdsAndDedupInvariantNames()
     {
-        RespondModified(DeltaJobDataQualityFixtures.BuildDuplicateIdDeltaPayload());
-
-        await CreateHelper().LoadCurrentDayCves();
-
-        // The helper hands both occurrences downstream (the keep-first dedup runs inside
-        // the Mongo service); the flushed batch therefore carries the duplicates, and
-        // the invariant check names exactly what is violated instead of passing silently.
-        _flushedCveBatches.Should().HaveCount(1);
-        var batch = _flushedCveBatches.Single();
-        batch.Should().HaveCount(2);
-
-        var violations = DeltaJobInvariants.CheckCveBatch(batch);
-
-        violations.Should().Contain(DeltaJobInvariants.IdsNonEmptyAndUniqueWithinBatch);
-        violations.Should().Contain(DeltaJobInvariants.DeduplicationAsDesigned);
+        await RunDeltaAndVerify("duplicate-cve-id-delta");
     }
 
+    #endregion
+
+    #region Fixture: empty-delta — nothing flushed, size invariant names the failure
+
     [Fact]
-    public async Task LoadCurrentDayCves_WithEmptyDelta_FlushesNothingAndFailsSizeInvariant()
+    public async Task LoadCurrentDayCves_EmptyDeltaFixture_FlushesNothingAndFailsSizeInvariant()
     {
-        RespondModified(DeltaJobDataQualityFixtures.EmptyDeltaPayload);
-
-        await CreateHelper().LoadCurrentDayCves();
-
-        _flushedCveBatches.Should().BeEmpty();
-        _flushedVendorBatches.Should().BeEmpty();
-
-        // An empty delta is never a silent ok: the size invariant flags it as a failure.
-        DeltaJobInvariants.CheckDeltaSize(new List<CveMongoModel>())
-            .Should().Contain(DeltaJobInvariants.DeltaSizeSane);
+        await RunDeltaAndVerify("empty-delta");
     }
 
+    #endregion
+
+    #region Fixture pair: monotonic-run1 + monotonic-run2 — dates never move backwards
+
     [Fact]
-    public async Task LoadCurrentDayCves_WithOlderModifiedInLaterRun_FailsWithMonotonicInvariantName()
+    public async Task LoadCurrentDayCves_MonotonicFixturePair_WhenSecondRunMovesDateBackwards_FailsWithMonotonicInvariantName()
     {
-        // Run 1 stores the CVE with the newer modification date.
-        RespondModified(DeltaJobDataQualityFixtures.BuildSingleCveDeltaPayload(
-            DeltaJobDataQualityFixtures.FirstCveId, "2026-02-02T00:00:00Z"));
-
-        await CreateHelper().LoadCurrentDayCves();
-
-        var stored = _flushedCveBatches.Single().ToDictionary(item => item.CveId, item => item.Modified);
+        // Run 1 establishes the stored modification state documented in its fixture.
+        await RunDeltaAndVerify("monotonic-run1");
 
         // Run 2 re-delivers the same CVE with an older modification date.
-        RespondModified(DeltaJobDataQualityFixtures.BuildSingleCveDeltaPayload(
-            DeltaJobDataQualityFixtures.FirstCveId, "2026-02-01T00:00:00Z"));
+        await RunDeltaAndVerify("monotonic-run2-backwards");
+    }
 
-        await CreateHelper().LoadCurrentDayCves();
+    [Fact]
+    public async Task LoadCurrentDayCves_MonotonicFixturePair_WhenSecondRunDateIsUnchanged_ReportsNoViolations()
+    {
+        await RunDeltaAndVerify("monotonic-run1");
 
-        var secondRunBatch = _flushedCveBatches.Last();
-
-        DeltaJobInvariants.CheckCveBatch(secondRunBatch, stored)
-            .Should().Contain(DeltaJobInvariants.ModificationDatesMonotonic);
+        // An unchanged modification date never moves backwards.
+        await RunDeltaAndVerify("monotonic-run2-equal");
     }
 
     #endregion
 
-    #region Positive: unchanged modification dates never violate monotonicity
+    #region Fixture: oversized-delta — batching keeps every flush bounded
 
     [Fact]
-    public async Task LoadCurrentDayCves_WithUnchangedModifiedInLaterRun_ReportsNoViolations()
+    public async Task LoadCurrentDayCves_OversizedDeltaFixture_ProducesBoundedBatchesWithUniqueIds()
     {
-        RespondModified(DeltaJobDataQualityFixtures.BuildSingleCveDeltaPayload(
-            DeltaJobDataQualityFixtures.FirstCveId, "2026-02-02T00:00:00Z"));
-
-        await CreateHelper().LoadCurrentDayCves();
-
-        var stored = _flushedCveBatches.Single().ToDictionary(item => item.CveId, item => item.Modified);
-
-        RespondModified(DeltaJobDataQualityFixtures.BuildSingleCveDeltaPayload(
-            DeltaJobDataQualityFixtures.FirstCveId, "2026-02-02T00:00:00Z"));
-
-        await CreateHelper().LoadCurrentDayCves();
-
-        DeltaJobInvariants.CheckCveBatch(_flushedCveBatches.Last(), stored).Should().BeEmpty();
+        await RunDeltaAndVerify("oversized-delta");
     }
 
     #endregion
 
-    #region Positive: batching keeps every flush bounded with unique ids across the run
-
-    [Fact]
-    public async Task LoadCurrentDayCves_WithMoreCvesThanBatchSize_FlushesBoundedBatchesWithUniqueIds()
+    /// <summary>
+    /// Serves the fixture input on the modified-window seam, runs the delta job once,
+    /// and verifies everything the job flushed against the fixture's expected output
+    /// and invariant verdict.
+    /// </summary>
+    private async Task RunDeltaAndVerify(string fixtureName)
     {
-        RespondModified(DeltaJobDataQualityFixtures.BuildSizedDeltaPayload(
-            DeltaJobInvariants.MaxCveBatchSize + 1));
+        _flushedCveBatches.Clear();
+        _flushedVendorBatches.Clear();
+
+        _httpHandler.RespondPrefix(ModifiedApiPrefix, DeltaJobFixtures.ReadDeltaInput(fixtureName));
+
+        var expected = DeltaJobFixtures.ReadDeltaExpected(fixtureName);
 
         await CreateHelper().LoadCurrentDayCves();
 
-        _flushedCveBatches.Should().HaveCount(2, "the helper flushes at the 1000-item boundary");
-        _flushedCveBatches[0].Should().HaveCount(DeltaJobInvariants.MaxCveBatchSize);
-        _flushedCveBatches[1].Should().HaveCount(1);
+        VerifyFlushesAgainstExpected(fixtureName, expected);
+    }
 
-        _flushedCveBatches
-            .SelectMany(batch => batch)
-            .Select(item => item.CveId)
+    private void VerifyFlushesAgainstExpected(string fixtureName, DeltaJobExpectedFixture expected)
+    {
+        VerifyCveFlushes(fixtureName, expected);
+        VerifyVendorFlushes(fixtureName, expected);
+        VerifyInvariantVerdict(fixtureName, expected);
+    }
+
+    private void VerifyCveFlushes(string fixtureName, DeltaJobExpectedFixture expected)
+    {
+        _flushedCveBatches.Select(batch => batch.Count).Should().Equal(expected.ExpectedCveBatchSizes,
+            "fixture {0}: {1}", fixtureName, expected.Description);
+
+        if (expected.ExpectedCveIdsByBatch is not null)
+        {
+            for (var i = 0; i < expected.ExpectedCveIdsByBatch.Count; i++)
+            {
+                _flushedCveBatches[i].Select(item => item.CveId).Should().Equal(
+                    expected.ExpectedCveIdsByBatch[i],
+                    "fixture {0}, flush {1}: {2}", fixtureName, i, expected.Description);
+            }
+        }
+
+        if (expected.ExpectedModifiedByCveId is not null)
+        {
+            foreach (var (cveId, modified) in expected.ExpectedModifiedByCveId)
+            {
+                _flushedCveBatches
+                    .SelectMany(batch => batch)
+                    .Single(item => item.CveId == cveId)
+                    .Modified.Should().Be(modified,
+                        "fixture {0}: {1}", fixtureName, expected.Description);
+            }
+        }
+    }
+
+    private void VerifyVendorFlushes(string fixtureName, DeltaJobExpectedFixture expected)
+    {
+        if (expected.ExpectedVendorBatches is null)
+            return;
+
+        _flushedVendorBatches.Should().HaveCount(expected.ExpectedVendorBatches.Count,
+            "fixture {0}: {1}", fixtureName, expected.Description);
+
+        for (var i = 0; i < expected.ExpectedVendorBatches.Count; i++)
+        {
+            var captured = _flushedVendorBatches[i];
+            var expectedBatch = expected.ExpectedVendorBatches[i];
+
+            captured.Should().HaveCount(expectedBatch.Count,
+                "fixture {0}, vendor flush {1}: {2}", fixtureName, i, expected.Description);
+
+            foreach (var expectedVendor in expectedBatch)
+            {
+                captured.Single(vp => vp.Vendor == expectedVendor.Vendor).Softwares
+                    .OrderBy(software => software).Should().Equal(
+                        expectedVendor.Softwares.OrderBy(software => software),
+                        "fixture {0}, vendor {1}: {2}", fixtureName, expectedVendor.Vendor, expected.Description);
+            }
+        }
+    }
+
+    private void VerifyInvariantVerdict(string fixtureName, DeltaJobExpectedFixture expected)
+    {
+        // When nothing was flushed the observed batch at the flush contract is empty,
+        // which the size invariant must name instead of passing silently.
+        var observedBatches = _flushedCveBatches.Count > 0
+            ? _flushedCveBatches
+            : (IReadOnlyList<IList<CveMongoModel>>)new List<IList<CveMongoModel>> { new List<CveMongoModel>() };
+
+        var stored = expected.StoredModifiedByCveId ?? new Dictionary<string, DateTime>();
+
+        var violations = observedBatches
+            .SelectMany(batch => DeltaJobInvariants.CheckCveBatch(batch, stored))
+            .Concat(_flushedVendorBatches.SelectMany(vendorBatch => DeltaJobInvariants.CheckDeduplication(vendorBatch)))
             .Distinct()
-            .Should().HaveCount(DeltaJobInvariants.MaxCveBatchSize + 1,
-                "every id across the whole delta run is unique");
+            .ToList();
 
-        foreach (var batch in _flushedCveBatches)
-            DeltaJobInvariants.CheckCveBatch(batch).Should().BeEmpty();
+        violations.Should().Equal(expected.ExpectedInvariantViolations,
+            "fixture {0}: {1}", fixtureName, expected.Description);
     }
-
-    #endregion
 
     private VulnerabilitiesJsonHelper CreateHelper()
     {
@@ -237,16 +253,6 @@ public class VulnerabilitiesJsonHelperDeltaJobTests
             CveJsonModifiedApiUrl = "https://unit.test/rest/json/cves/2.0/?lastModStartDate={0}-{1}-{2}T{3}:00:00.000&lastModEndDate={4}-{5}-{6}T{7}:00:00.000",
             CveJsonPublishedApiUrl = "https://unit.test/rest/json/cves/2.0/?pubStartDate={0}-{1}-{2}T{3}:00:00.000&pubEndDate={4}-{5}-{6}T{7}:00:00.000"
         });
-    }
-
-    private void RespondModified(string payload)
-    {
-        _httpHandler.RespondPrefix(ModifiedApiPrefix, Encoding.UTF8.GetBytes(payload));
-    }
-
-    private void RespondPublished(string payload)
-    {
-        _httpHandler.RespondPrefix(PublishedApiPrefix, Encoding.UTF8.GetBytes(payload));
     }
 
     private sealed class StubHttpHandler : HttpMessageHandler

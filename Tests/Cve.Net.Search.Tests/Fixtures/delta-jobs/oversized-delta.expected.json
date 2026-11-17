@@ -1,0 +1,6 @@
+{
+  "description": "A delta window returning 1001 distinct CVEs: the job flushes at the 1000-item batch boundary, so the output is two bounded flushes (1000 + 1) with unique ids across the whole run. Every flushed batch satisfies all four invariants.",
+  "expectedCveBatchSizes": [ 1000, 1 ],
+  "expectedDistinctCveIds": 1001,
+  "expectedInvariantViolations": []
+}

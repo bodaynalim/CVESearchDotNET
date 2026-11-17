@@ -18,6 +18,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- T12 delta-job fixtures are copied next to the test binaries so tests can load them via AppContext.BaseDirectory
+         (same pattern as the T03 golden fixtures) -->
+    <Content Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Application\Cve.Net.Search.Application\Cve.Net.Search.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Cve.Net.Search.Infrastructure\Cve.Net.Search.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Web\Cve.Net.Search.Web\Cve.Net.Search.Web.csproj" />
