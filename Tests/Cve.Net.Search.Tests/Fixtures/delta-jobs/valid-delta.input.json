@@ -1,0 +1,53 @@
+[
+  {
+    "cve": {
+      "id": "CVE-2026-0001",
+      "sourceIdentifier": "test@unit.test",
+      "published": "2026-01-01T00:00:00Z",
+      "lastModified": "2026-02-01T00:00:00Z",
+      "descriptions": [ { "lang": "en", "value": "Summary of CVE-2026-0001" } ],
+      "references": [],
+      "metrics": {},
+      "weaknesses": [],
+      "configurations": [
+        {
+          "nodes": [
+            {
+              "operator": "OR",
+              "negate": false,
+              "cpeMatch": [
+                { "vulnerable": true, "matchCriteriaId": "2b28319b-5c16-42e2-9a01-000000000001", "criteria": "cpe:2.3:a:acme:widget:1.0:*:*:*:*:*:*:*" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-2026-0002",
+      "sourceIdentifier": "test@unit.test",
+      "published": "2026-01-02T00:00:00Z",
+      "lastModified": "2026-02-02T00:00:00Z",
+      "descriptions": [ { "lang": "en", "value": "Summary of CVE-2026-0002" } ],
+      "references": [],
+      "metrics": {},
+      "weaknesses": [],
+      "configurations": [
+        {
+          "nodes": [
+            {
+              "operator": "OR",
+              "negate": false,
+              "cpeMatch": [
+                { "vulnerable": true, "matchCriteriaId": "2b28319b-5c16-42e2-9a01-000000000002", "criteria": "cpe:2.3:a:acme:gadget:2.0:*:*:*:*:*:*:*" },
+                { "vulnerable": true, "matchCriteriaId": "2b28319b-5c16-42e2-9a01-000000000003", "criteria": "cpe:2.3:a:beta:gadget:2.0:*:*:*:*:*:*:*" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

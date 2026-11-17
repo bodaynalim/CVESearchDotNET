@@ -1,0 +1,8 @@
+{
+  "description": "Positive dedup fixture: the vendor aggregation output as designed — one entry per vendor with a distinct software set (the job collapses vendor/product pairs before the bulk upsert). Verdict: no violations.",
+  "vendorProducts": [
+    { "vendor": "acme", "softwares": [ "gadget", "widget" ] },
+    { "vendor": "beta", "softwares": [ "gadget" ] }
+  ],
+  "expectedInvariantViolations": []
+}

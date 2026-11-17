@@ -1,0 +1,10 @@
+{
+  "description": "Negative monotonicity fixture: a flushed delta batch where a known CVE carries a modification date older than the stored state — the date moved backwards. Verdict: the monotonicity invariant is named.",
+  "cves": [
+    { "cveId": "CVE-2026-0001", "modified": "2026-02-01T00:00:00Z" }
+  ],
+  "storedModified": {
+    "CVE-2026-0001": "2026-02-02T00:00:00Z"
+  },
+  "expectedInvariantViolations": [ "ModificationDatesMonotonic" ]
+}

@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Golden test fixtures (T03) are copied next to the test binaries so tests can load them via AppContext.BaseDirectory -->
+    <!-- Golden (T03) and delta-job (T12) test fixtures are copied next to the test binaries so tests can load them via AppContext.BaseDirectory -->
     <Content Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

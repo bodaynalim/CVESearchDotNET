@@ -1,0 +1,5 @@
+{
+  "description": "An empty delta window flushes nothing; the observed (empty) batch at the flush contract is flagged by the size invariant instead of passing silently.",
+  "expectedCveBatchSizes": [],
+  "expectedInvariantViolations": [ "DeltaSizeSane" ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "Negative ids fixture: a flushed delta batch carrying blank (empty and whitespace-only) CveIds. Observed at the flush contract; verdict: the ids invariant is named, so the batch cannot pass silently.",
+  "cves": [
+    { "cveId": "CVE-2026-0001", "modified": "2026-02-01T00:00:00Z" },
+    { "cveId": "", "modified": "2026-02-02T00:00:00Z" },
+    { "cveId": " ", "modified": "2026-02-03T00:00:00Z" }
+  ],
+  "expectedInvariantViolations": [ "IdsNonEmptyAndUniqueWithinBatch" ]
+}

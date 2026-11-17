@@ -1,0 +1,9 @@
+{
+  "description": "First delta run of the monotonicity pair: CVE-2026-0001 is stored with the 2026-02-02 modification date, which becomes the stored state the second run is judged against. No invariant is violated.",
+  "expectedCveBatchSizes": [ 1 ],
+  "expectedCveIdsByBatch": [ [ "CVE-2026-0001" ] ],
+  "storedModifiedByCveId": {
+    "CVE-2026-0001": "2026-02-02T00:00:00Z"
+  },
+  "expectedInvariantViolations": []
+}

@@ -1,0 +1,9 @@
+{
+  "description": "Second delta run of the monotonicity pair (positive case): the same CVE is re-delivered with the same modification date it already has; an unchanged date never moves backwards, so no invariant is violated.",
+  "expectedCveBatchSizes": [ 1 ],
+  "expectedCveIdsByBatch": [ [ "CVE-2026-0001" ] ],
+  "storedModifiedByCveId": {
+    "CVE-2026-0001": "2026-02-02T00:00:00Z"
+  },
+  "expectedInvariantViolations": []
+}

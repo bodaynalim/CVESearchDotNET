@@ -1,0 +1,8 @@
+{
+  "description": "Negative dedup fixture: the vendor aggregation output is not collapsed — the same vendor appears twice and one entry carries a duplicated software. Verdict: the deduplication invariant is named.",
+  "vendorProducts": [
+    { "vendor": "acme", "softwares": [ "widget" ] },
+    { "vendor": "acme", "softwares": [ "gadget", "gadget" ] }
+  ],
+  "expectedInvariantViolations": [ "DeduplicationAsDesigned" ]
+}

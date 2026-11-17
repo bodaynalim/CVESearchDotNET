@@ -1,0 +1,5 @@
+{
+  "description": "Negative size fixture: an empty flushed batch — an empty delta is a failure, never a silent ok. Verdict: the size invariant is named.",
+  "cves": [],
+  "expectedInvariantViolations": [ "DeltaSizeSane" ]
+}

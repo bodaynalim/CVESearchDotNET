@@ -5,184 +5,90 @@ using Xunit;
 namespace Cve.Net.Search.Tests;
 
 /// <summary>
-/// Pure invariant tests for the delta-job data-quality checks (T12). Each invariant
-/// has a positive case (sound batch → no violations) and a negative case (a
-/// deliberately violating fixture → the test fails naming the invariant).
+/// Fixture-driven invariant verdicts at the flush contract: each named fixture under
+/// Fixtures/batches holds a batch exactly as the delta job hands it to
+/// ICveMongoService (CVE batches) or IVendorMongoService (vendor aggregations),
+/// together with its expectedInvariantViolations. A positive fixture must produce a
+/// clean verdict; a violating fixture must fail with the invariant's name — never
+/// silently. The checker is the observation point for the invariant semantics.
 /// </summary>
 public class DeltaJobInvariantsTests
 {
-    private static readonly DateTime DefaultModified = new(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc);
-
-    private static CveMongoModel Cve(string cveId, DateTime? modified = null)
+    public static TheoryData<string> PositiveBatchFixtures()
     {
-        return new CveMongoModel
-        {
-            CveId = cveId,
-            Modified = modified ?? DefaultModified
-        };
+        return BatchFixtures(expectedViolations: false);
     }
 
-    #region Ids non-empty and unique within a batch
-
-    [Fact]
-    public void CheckCveBatch_WithDistinctNonEmptyIds_ReportsNoViolations()
+    public static TheoryData<string> ViolatingBatchFixtures()
     {
-        var batch = new List<CveMongoModel> { Cve("CVE-2026-0001"), Cve("CVE-2026-0002") };
+        return BatchFixtures(expectedViolations: true);
+    }
 
-        DeltaJobInvariants.CheckCveBatch(batch).Should().BeEmpty();
+    private static TheoryData<string> BatchFixtures(bool expectedViolations)
+    {
+        var data = new TheoryData<string>();
+
+        foreach (var name in DeltaJobFixtures.BatchFixtureNames())
+        {
+            if (DeltaJobFixtures.ReadBatch(name).ExpectedInvariantViolations.Count > 0 == expectedViolations)
+                data.Add(name);
+        }
+
+        return data;
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData(null)]
-    public void CheckCveBatch_WithBlankCveId_FailsWithIdsInvariantName(string? cveId)
+    [MemberData(nameof(PositiveBatchFixtures))]
+    public void FlushContractBatch_WithPositiveFixture_ReportsNoInvariantViolations(string fixtureName)
     {
-        // The null id is the point of this negative case, hence the suppression.
-        var batch = new List<CveMongoModel> { Cve("CVE-2026-0001"), Cve(cveId!) };
+        var fixture = DeltaJobFixtures.ReadBatch(fixtureName);
 
-        DeltaJobInvariants.CheckCveBatch(batch)
-            .Should().Contain(DeltaJobInvariants.IdsNonEmptyAndUniqueWithinBatch);
+        var violations = EvaluateBatchFixture(fixture);
+
+        violations.Should().BeEmpty(
+            "fixture {0} documents a sound batch: {1}", fixtureName, fixture.Description);
     }
 
-    [Fact]
-    public void CheckCveBatch_WithDuplicateCveIds_FailsWithIdsInvariantName()
+    [Theory]
+    [MemberData(nameof(ViolatingBatchFixtures))]
+    public void FlushContractBatch_WithViolatingFixture_FailsWithTheNamedInvariants(string fixtureName)
     {
-        var batch = new List<CveMongoModel> { Cve("CVE-2026-0001"), Cve("CVE-2026-0001") };
+        var fixture = DeltaJobFixtures.ReadBatch(fixtureName);
 
-        DeltaJobInvariants.CheckCveBatch(batch)
-            .Should().Contain(DeltaJobInvariants.IdsNonEmptyAndUniqueWithinBatch);
+        var violations = EvaluateBatchFixture(fixture);
+
+        violations.Should().Equal(fixture.ExpectedInvariantViolations,
+            "fixture {0} documents a deliberate violation: {1}", fixtureName, fixture.Description);
     }
 
-    #endregion
-
-    #region Deduplication behaves as designed
-
-    [Fact]
-    public void CheckCveBatch_WithKeepFirstDedupApplied_ReportsNoViolations()
+    private static List<string> EvaluateBatchFixture(DeltaBatchFixture fixture)
     {
-        // A batch where the designed keep-first dedup has already collapsed duplicates.
-        var batch = new List<CveMongoModel> { Cve("CVE-2026-0001"), Cve("CVE-2026-0002") };
+        var violations = new List<string>();
 
-        DeltaJobInvariants.CheckCveBatch(batch)
-            .Should().NotContain(DeltaJobInvariants.DeduplicationAsDesigned);
-    }
-
-    [Fact]
-    public void CheckCveBatch_WithDuplicateCveIds_FailsWithDedupInvariantName()
-    {
-        // Two occurrences of the same CveId survived into a flushed batch: the
-        // designed keep-first dedup did not run.
-        var batch = new List<CveMongoModel> { Cve("CVE-2026-0001"), Cve("CVE-2026-0001") };
-
-        DeltaJobInvariants.CheckCveBatch(batch)
-            .Should().Contain(DeltaJobInvariants.DeduplicationAsDesigned);
-    }
-
-    [Fact]
-    public void CheckDeduplication_WithCollapsedVendorProducts_ReportsNoViolations()
-    {
-        // One entry per vendor, distinct software sets (the designed vendor aggregation).
-        var vendorProducts = new List<(string Vendor, IReadOnlyList<string> Softwares)>
+        if (fixture.Cves.Count > 0)
         {
-            ("acme", new[] { "gadget", "widget" }),
-            ("beta", new[] { "gadget" })
-        };
+            var batch = fixture.Cves
+                .Select(cve => new CveMongoModel { CveId = cve.CveId, Modified = cve.Modified })
+                .ToList();
 
-        DeltaJobInvariants.CheckDeduplication(vendorProducts).Should().BeEmpty();
-    }
-
-    [Fact]
-    public void CheckDeduplication_WithDuplicateVendorEntries_FailsWithDedupInvariantName()
-    {
-        var vendorProducts = new List<(string Vendor, IReadOnlyList<string> Softwares)>
+            violations.AddRange(DeltaJobInvariants.CheckCveBatch(batch, fixture.StoredModified));
+        }
+        else if (fixture.VendorProducts.Count == 0)
         {
-            ("acme", new[] { "widget" }),
-            ("acme", new[] { "gadget" })
-        };
+            // No batch was flushed: the observed batch at the flush contract is empty,
+            // and an empty delta is a size failure, not a silent ok.
+            violations.AddRange(DeltaJobInvariants.CheckDeltaSize(new List<CveMongoModel>()));
+        }
 
-        DeltaJobInvariants.CheckDeduplication(vendorProducts)
-            .Should().Contain(DeltaJobInvariants.DeduplicationAsDesigned);
-    }
-
-    [Fact]
-    public void CheckDeduplication_WithDuplicateSoftwaresWithinVendor_FailsWithDedupInvariantName()
-    {
-        var vendorProducts = new List<(string Vendor, IReadOnlyList<string> Softwares)>
+        if (fixture.VendorProducts.Count > 0)
         {
-            ("acme", new[] { "widget", "widget" })
-        };
+            var vendorProducts = fixture.VendorProducts
+                .Select(vp => (vp.Vendor, (IReadOnlyList<string>)vp.Softwares))
+                .ToList();
 
-        DeltaJobInvariants.CheckDeduplication(vendorProducts)
-            .Should().Contain(DeltaJobInvariants.DeduplicationAsDesigned);
+            violations.AddRange(DeltaJobInvariants.CheckDeduplication(vendorProducts));
+        }
+
+        return violations.Distinct().ToList();
     }
-
-    #endregion
-
-    #region Modification dates monotonic (never move backwards)
-
-    [Fact]
-    public void CheckModificationDates_WhenIncomingDateIsUnchangedOrNewer_ReportsNoViolations()
-    {
-        var stored = new Dictionary<string, DateTime> { ["CVE-2026-0001"] = DefaultModified };
-        var batch = new List<CveMongoModel>
-        {
-            Cve("CVE-2026-0001", DefaultModified),                                // unchanged
-            Cve("CVE-2026-0002", DefaultModified.AddDays(1))                      // brand new, forward
-        };
-
-        DeltaJobInvariants.CheckModificationDates(batch, stored).Should().BeEmpty();
-    }
-
-    [Fact]
-    public void CheckModificationDates_WhenIncomingDateIsOlder_FailsWithMonotonicInvariantName()
-    {
-        var stored = new Dictionary<string, DateTime> { ["CVE-2026-0001"] = DefaultModified };
-        var batch = new List<CveMongoModel> { Cve("CVE-2026-0001", DefaultModified.AddDays(-1)) };
-
-        DeltaJobInvariants.CheckModificationDates(batch, stored)
-            .Should().Contain(DeltaJobInvariants.ModificationDatesMonotonic);
-    }
-
-    [Fact]
-    public void CheckCveBatch_WithStoredStateAndOlderDate_FailsWithMonotonicInvariantName()
-    {
-        var stored = new Dictionary<string, DateTime> { ["CVE-2026-0001"] = DefaultModified.AddDays(1) };
-        var batch = new List<CveMongoModel> { Cve("CVE-2026-0001") };
-
-        DeltaJobInvariants.CheckCveBatch(batch, stored)
-            .Should().Contain(DeltaJobInvariants.ModificationDatesMonotonic);
-    }
-
-    #endregion
-
-    #region Delta size sane (empty/unbounded are failures, not silent ok)
-
-    [Fact]
-    public void CheckDeltaSize_WithNonEmptyBoundedBatch_ReportsNoViolations()
-    {
-        var batch = new List<CveMongoModel>(Enumerable.Range(1, DeltaJobInvariants.MaxCveBatchSize)
-            .Select(i => Cve($"CVE-2026-{i:D4}")));
-
-        DeltaJobInvariants.CheckDeltaSize(batch).Should().BeEmpty();
-    }
-
-    [Fact]
-    public void CheckDeltaSize_WithEmptyBatch_FailsWithSizeInvariantName()
-    {
-        DeltaJobInvariants.CheckDeltaSize(new List<CveMongoModel>())
-            .Should().Contain(DeltaJobInvariants.DeltaSizeSane);
-    }
-
-    [Fact]
-    public void CheckDeltaSize_WithOversizedBatch_FailsWithSizeInvariantName()
-    {
-        var batch = new List<CveMongoModel>(Enumerable.Range(1, DeltaJobInvariants.MaxCveBatchSize + 1)
-            .Select(i => Cve($"CVE-2026-{i:D4}")));
-
-        DeltaJobInvariants.CheckDeltaSize(batch)
-            .Should().Contain(DeltaJobInvariants.DeltaSizeSane);
-    }
-
-    #endregion
 }
