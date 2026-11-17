@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Cve.Net.Search.Tests;
 
-// T05 (docs/tickets/T05-architecture-tests.md): mechanizes the layering rules from
+// Mechanizes the layering rules from
 // docs/CODING_STANDARDS.md section 2 (Layering, hard). Chosen deliberately over
 // NetArchTest.Rules to add zero new NuGet dependencies: the rules only concern
 // project-to-project references, which are fully visible in the compile-time
@@ -20,7 +20,7 @@ namespace Cve.Net.Search.Tests;
 public class LayerDependencyArchitectureTests
 {
     /// <summary>
-    /// Documented known violations of the layering rules (T05 acceptance criteria).
+    /// Documented known violations of the layering rules (acceptance criteria).
     /// Each entry is "Layer &gt; Dependency", e.g. "Cve.Net.Search.Domain.Common &gt; Cve.Net.Search.Infrastructure".
     /// Every entry must carry a comment explaining why it exists and the ticket that will fix it.
     /// The list is currently EMPTY — no layering violations exist in the codebase.

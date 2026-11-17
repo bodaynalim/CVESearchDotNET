@@ -97,7 +97,7 @@ These standards apply to the C#/.NET projects in this repository (Application, D
 ## 10. Build warnings (hard)
 
 - `TreatWarningsAsErrors` is enabled solution-wide via `Directory.Build.props`: any **new** compiler warning fails the build.
-- The only exceptions are the codes listed in `WarningsNotAsErrors` in that file — pre-existing documented debt, tracked for burn-down in `docs/tickets/T14-warning-exception-burndown.md`.
+- The only exceptions are the codes listed in `WarningsNotAsErrors` in that file — pre-existing documented debt, each with an inline justification comment.
 - Adding a code to `WarningsNotAsErrors` requires an inline comment explaining why and a burn-down item in T14. Silent `NoWarn`/`#pragma` suppression is not allowed.
 - CI builds the whole solution (`dotnet build Cve.Net.Search.sln`) with this policy before running tests.
 

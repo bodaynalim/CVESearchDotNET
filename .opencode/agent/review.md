@@ -17,26 +17,27 @@ You are in code review mode. Focus on:
 
 Provide constructive feedback without making direct changes.
 
-## Mandatory checklist (ticket T10)
+## Mandatory checklist
 
 Your review output MUST be a structured checklist — every item answered with
 `ok` / `fail` / `n/a` plus a one-line justification or file reference. Do not
 finish the review without filling every item:
 
 1. **Layering** — Domain/Application do not depend on Infrastructure/Web
-   (CODING_STANDARDS §2). Mechanically enforced by T05 architecture tests —
-   reference them; fail here only if the change bypasses or deletes them.
+   (CODING_STANDARDS §2). Mechanically enforced by the architecture tests
+   (LayerDependencyArchitectureTests) — reference them; fail here only if the
+   change bypasses or deletes them.
 2. **REST wire contract** — JSON stays camelCase, routing follows controller
-   conventions (ADR-0001, CODING_STANDARDS §3). If contract tests (T04) cover
-   the touched endpoints, reference them.
+   conventions (ADR-0001, CODING_STANDARDS §3). If the REST contract snapshot
+   tests cover the touched endpoints, reference them.
 3. **Keyword search semantics** — case-insensitive substring matching only
    (ADR-0002). Fail if the change alters matching semantics without an ADR
    update.
 4. **Mongo rules** — bulk upserts carry concrete ids (ADR-0003); MongoDB state
    is never used as a fixture (AGENTS.md §2).
 5. **Build policy** — no new compiler warnings; no additions to
-   `WarningsNotAsErrors` without an inline justification and a burn-down item
-   in docs/tickets/T14-warning-exception-burndown.md (CODING_STANDARDS §10).
+   `WarningsNotAsErrors` without an inline justification and a burn-down
+   comment (CODING_STANDARDS §10).
 6. **Tests** — affected suites identified and run; new behavior has tests at
    the highest viable seam; golden fixtures hand-reviewed, not auto-generated
    snapshots.
