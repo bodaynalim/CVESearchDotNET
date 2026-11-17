@@ -34,6 +34,10 @@ public static class HangfireStorageOptionsFactory
         {
             Prefix = CollectionPrefix,
             SlidingInvisibilityTimeout = SlidingInvisibilityTimeout,
+            // Standalone MongoDB (no replica set) does not support change streams,
+            // so the default WatchCollection strategy crashes MongoJobQueueWatcher.
+            // TailNotificationsCollection polls the notification collection instead.
+            CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
             MigrationOptions = new MongoMigrationOptions
             {
                 // Keep automatic: without it a package upgrade changes the schema version

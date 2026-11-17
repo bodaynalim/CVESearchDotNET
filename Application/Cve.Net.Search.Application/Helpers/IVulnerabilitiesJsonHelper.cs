@@ -23,7 +23,7 @@ public interface IVulnerabilitiesJsonHelper
     /// <param name="year">Year archive to import, e.g. 2024</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [Mutex("InitialImportCvesYear-{0}")]
+    [Mutex("LoadNewAndModifiedCves")]
     Task ImportCvesYear(int year, CancellationToken cancellationToken = default);
 
     /// <summary>
