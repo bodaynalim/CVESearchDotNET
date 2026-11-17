@@ -6,7 +6,22 @@
       "git *": "allow",
       "git commit *": "deny",
       "git push *": "deny",
-      "grep *": "allow"
+      "git clean *": "deny",
+      "git reset *": "ask",
+      "grep *": "allow",
+      "rm -rf *": "deny",
+      "dotnet ef database drop*": "deny",
+      "npm publish*": "deny",
+      "dotnet nuget push*": "deny",
+      "docker * down*": "ask",
+      "mongo*": "ask",
+      "dotnet format *": "allow"
+    },
+    "edit": {
+      "docs/CODING_STANDARDS.md": "ask",
+      "docs/adr/**": "ask",
+      "docs/GLOSSARY.md": "ask",
+      "AGENTS.md": "ask"
     }
   },
   "agent": {
