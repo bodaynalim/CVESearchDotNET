@@ -28,8 +28,21 @@
 - [ ] Скрипт не мутить стан (не фіксить сам, не міняє файли)
 - [ ] AGENTS.md оновлений
 
+## Implementation notes (2026-11-17, T09 реалізовано)
+
+- `scripts/preflight.ps1`: editorconfig (verify; `-Fix` — auto-fix), build, tests
+  ( `-SkipTests`), doc-links; PS 5.1-compatible, exit-контроль через `$LASTEXITCODE`.
+- **Hooks (розширення тікету за рішенням користувача)**:
+  - `scripts/hooks/commit-msg` — commit message без номера тікету відхиляється
+    (перевірено: порожній/без тікету → REJECTED).
+  - `scripts/hooks/pre-push` — повний preflight перед будь-яким push (людина чи
+    агент); виклик через `powershell.exe -ExecutionPolicy Bypass` (works у будь-якому
+    клоні, execution policy не заважає).
+  - `scripts/install-hooks.ps1` → `git config core.hooksPath scripts/hooks`; треба
+    запустити один раз на клон/worktree.
+- Теперішня оточення: hook відхиляє push, preflight якого не зелений; спрацьовує
+  незалежно від CI і незалежно від того, хто пушить.
+
 ## Out of scope
 
-- Editorconfig перевірка (T13), publish/CI-механіка
-- git hook'и (preflight — свідомий step агента/людини, не примусовий hook; рішення
-  може бути переглянуте окремо)
+- Publish/CI-механіка поза hook'ами

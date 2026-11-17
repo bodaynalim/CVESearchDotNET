@@ -28,8 +28,14 @@
 - [ ] Перевірка не конфликтує з T01 (warnings-as-errors) — послідовність кроків
       зафіксована: спочатку format, потім build
 
+## Implementation notes (2026-11-17, T13 реалізовано)
+
+- Format sweep виконано окремим комітом `T13: mechanical format sweep` — 23 файлів
+  production-коду, тільки whitespace/style, verify зелений, жодних змін логіки.
+- CI: step `editorconfig compliance (T13)` → `dotnet format --verify-no-changes --severity warn` у job `api`.
+- Preflight: verify-крок обов'язковий; локально `-Fix` автоматично чинить.
+- CveUI lint/format — досі out of scope (немає скриптів у package.json).
+
 ## Out of scope
 
-- CveUI (Angular): lint/format скриптів у package.json немає; додавання prettier/eslint
-  — окреме рішення (нове tooling), не в цьому тікеті
 - Зміна правил .editorconfig (він авторитетний; зміна — окремо)
