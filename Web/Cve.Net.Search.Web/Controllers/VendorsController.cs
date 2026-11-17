@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Cve.Application.Services;
 using Cve.Infrastructure.Extensions;
 using Cve.Net.Search.Domain.ViewModels;
+using CVESearch.Mapping;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,11 +16,9 @@ namespace CVESearch.Controllers;
 public class VendorsController : Controller
 {
     private readonly IVendorMongoService _vendorMongoService;
-    private readonly IMapper _mapper;
 
-    public VendorsController(IMapper mapper, IVendorMongoService vendorMongoService)
+    public VendorsController(IVendorMongoService vendorMongoService)
     {
-        _mapper = mapper;
         _vendorMongoService = vendorMongoService;
     }
 
@@ -71,6 +69,6 @@ public class VendorsController : Controller
         if (vendorModel == null)
             return NotFound($"{vendor} is not found");
 
-        return Ok(_mapper.Map<VendorProductsViewModel>(vendorModel));
+        return Ok(vendorModel.ToVendorProductsViewModel());
     }
 }

@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Cve.Application.Services;
 using Cve.Net.Search.Domain.ViewModels;
+using CVESearch.Mapping;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,12 +14,10 @@ namespace CVESearch.Controllers;
 public class CapecController : Controller
 {
     private readonly ICapecMongoService _capecMongoService;
-    private readonly IMapper _mapper;
 
-    public CapecController(ICapecMongoService capecMongoService, IMapper mapper)
+    public CapecController(ICapecMongoService capecMongoService)
     {
         _capecMongoService = capecMongoService;
-        _mapper = mapper;
     }
 
     /// <summary>
@@ -38,6 +36,6 @@ public class CapecController : Controller
         if (capec == null)
             return NotFound($"CAPEC-{capecId} is not found");
 
-        return Ok(_mapper.Map<CapecViewModel>(capec));
+        return Ok(capec.ToCapecViewModel());
     }
 }

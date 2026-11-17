@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using Cve.Application.Services;
 using Cve.Net.Search.Domain.ViewModels;
+using CVESearch.Mapping;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,12 +16,10 @@ namespace CVESearch.Controllers;
 public class CweController : Controller
 {
     private readonly ICweMongoService _cweMongoService;
-    private readonly IMapper _mapper;
 
-    public CweController(ICweMongoService cweMongoService, IMapper mapper)
+    public CweController(ICweMongoService cweMongoService)
     {
         _cweMongoService = cweMongoService;
-        _mapper = mapper;
     }
 
     /// <summary>
@@ -53,7 +51,7 @@ public class CweController : Controller
     {
         var (cwes, _) = await _cweMongoService.GetCweList(null, count, page, cancellationToken);
 
-        return Ok(cwes.Select(c => _mapper.Map<CweViewModel>(c)));
+        return Ok(cwes.Select(c => c.ToCweViewModel()));
     }
 
     /// <summary>
@@ -90,7 +88,7 @@ public class CweController : Controller
     {
         var (cwes, _) = await _cweMongoService.GetCweList(NormalizeKeyword(keyword), count, page, cancellationToken);
 
-        return Ok(cwes.Select(c => _mapper.Map<CweViewModel>(c)));
+        return Ok(cwes.Select(c => c.ToCweViewModel()));
     }
 
     private static string NormalizeKeyword(string keyword)
@@ -117,6 +115,6 @@ public class CweController : Controller
         if (cwe == null)
             return NotFound($"CWE-{cweId} is not found");
 
-        return Ok(_mapper.Map<CweViewModel>(cwe));
+        return Ok(cwe.ToCweViewModel());
     }
 }
