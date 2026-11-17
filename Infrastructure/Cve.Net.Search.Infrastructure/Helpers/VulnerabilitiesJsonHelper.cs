@@ -111,7 +111,8 @@ public class VulnerabilitiesJsonHelper : IVulnerabilitiesJsonHelper
     public async Task ImportCvesYear(int year, CancellationToken cancellationToken = default)
     {
         await RunInitialStepAsync($"{InitialImportStateService.StepCvesPrefix}{year}",
-            ct => LoadCertainUrlCvesZip(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, year), ct),
+            ct => LoadCertainUrlCvesZip(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, year),
+                FlushCveItemsCreateNew, ct),
             cancellationToken);
     }
 
@@ -164,7 +165,10 @@ public class VulnerabilitiesJsonHelper : IVulnerabilitiesJsonHelper
         if (!await IsCveBaselineReadyAsync(cancellationToken))
             return;
 
-        //TODO: fix with NVD API 2.0
+        // Daily catch-up: the current-year archive feed covers the gaps the hourly delta
+        // may have missed (throttled runs, transient failures). Upserts, not inserts.
+        await LoadCertainUrlCvesZip(string.Format(_vulnerabilitiesUrls.CveJsonNameUrlTemplate, DateTime.UtcNow.Year),
+            FlushCveItemsCreateOrUpdate, cancellationToken);
     }
 
     public async Task LoadCurrentDayCves(CancellationToken cancellationToken = default)
@@ -409,9 +413,12 @@ public class VulnerabilitiesJsonHelper : IVulnerabilitiesJsonHelper
     /// Download ZIP file with CVEs json inside, unarchive and add them into DB
     /// </summary>
     /// <param name="url">URL to ZIP file</param>
+    /// <param name="flushBatch">How parsed batches are persisted (initial import inserts, catch-up upserts)</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task LoadCertainUrlCvesZip(string url, CancellationToken cancellationToken)
+    private async Task LoadCertainUrlCvesZip(string url,
+        Func<IList<CveMongoModel>, IList<(string Vendor, IReadOnlyList<string> Softwares)>, CancellationToken, Task> flushBatch,
+        CancellationToken cancellationToken)
     {
         var tempPath = Path.GetTempPath();
         var tempRandomFile = Path.Combine(tempPath, $"{Path.GetRandomFileName()}.zip");
@@ -428,7 +435,7 @@ public class VulnerabilitiesJsonHelper : IVulnerabilitiesJsonHelper
 
             await DeserializeAndSaveCveJson(jsonFile,
                 (item) => item.ToObject<CveItemNewApi>().ToCveMongoModel(),
-                (items, vendorProducts, ct) => FlushCveItemsCreateNew(items, vendorProducts, ct),
+                flushBatch,
                 cancellationToken);
         }
         catch (Exception e)
