@@ -1,4 +1,4 @@
-using Cve.Net.Search.Domain.Common.Cve;
+﻿using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.ViewModels;
 using FluentAssertions;
 using Xunit;
@@ -53,7 +53,7 @@ public class CveContractSnapshotTests
             VulnerableConfigurations = ["cpe:2.3:a:example:example_app:1.0:*:*:*:*:*:*:*"],
         });
 
-        ContractSerialization.FormatForDiff(actual).Should().Be(ContractGolden.CveViewModel,
+        ContractSerialization.FormatForDiff(actual).Should().Be(ContractSerialization.NormalizeNewlines(ContractGolden.CveViewModel),
             "the Cve wire contract is pinned by ADR-0001; if this diff is an intended contract change, update the golden JSON after review and mirror it in CveUI fixtures");
     }
 
@@ -69,14 +69,14 @@ public class CveContractSnapshotTests
             Cwes = [],
             Summary = "Insufficient information, no scoring available.",
             // The record properties are declared non-nullable but the wire payload for a
-            // CVSS-less CVE legitimately carries explicit nulls — the golden pins exactly that.
+            // CVSS-less CVE legitimately carries explicit nulls вЂ” the golden pins exactly that.
             Cvss2 = null!,
             Cvss3 = null!,
             ReferencesUrls = [],
             VulnerableConfigurations = [],
         });
 
-        ContractSerialization.FormatForDiff(actual).Should().Be(ContractGolden.CveViewModelWithoutCvss,
+        ContractSerialization.FormatForDiff(actual).Should().Be(ContractSerialization.NormalizeNewlines(ContractGolden.CveViewModelWithoutCvss),
             "cvss2/cvss3 must stay present as explicit nulls on the wire; dropping the keys would be a breaking contract change for CveUI");
     }
 
@@ -85,7 +85,7 @@ public class CveContractSnapshotTests
     {
         var actual = ContractSerialization.Serialize(new CveSearchCountViewModel { Total = 42 });
 
-        ContractSerialization.FormatForDiff(actual).Should().Be(ContractGolden.CveSearchCountViewModel,
+        ContractSerialization.FormatForDiff(actual).Should().Be(ContractSerialization.NormalizeNewlines(ContractGolden.CveSearchCountViewModel),
             "the count-endpoint wire contract is pinned by ADR-0001");
     }
 

@@ -1,7 +1,7 @@
-// T04 contract snapshots. Golden JSON below is HAND-AUTHORED and pinned to ADR-0001:
+﻿// T04 contract snapshots. Golden JSON below is HAND-AUTHORED and pinned to ADR-0001:
 // every property name on the wire is camelCase while the C# records are PascalCase.
 // Property ORDER follows the C# declaration order (Newtonsoft preserves it), and MVC's
-// contract resolver INCLUDES null properties (NullValueHandling.Include) — both are
+// contract resolver INCLUDES null properties (NullValueHandling.Include) вЂ” both are
 // pinned. If a change here is intended, it is a wire-contract change and must be
 // reviewed against ADR-0001 and mirrored in CveUI fixtures.
 namespace Cve.Net.Search.Tests;
@@ -116,7 +116,7 @@ internal static class ContractGolden
 
     /// <summary>
     /// CapecController: Get. Note: ExecutionFlowTypeAttack.Techniques is a public FIELD,
-    /// not a property — yet Newtonsoft's DefaultContractResolver (MVC default) DOES
+    /// not a property вЂ” yet Newtonsoft's DefaultContractResolver (MVC default) DOES
     /// serialize public fields, and it orders fields BEFORE properties, so "techniques"
     /// is part of the wire contract and comes first inside each execution-flow entry.
     /// Pinned deliberately so CveUI never expects a different key set.

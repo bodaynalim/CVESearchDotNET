@@ -1,4 +1,4 @@
-using Cve.Net.Search.Domain.Common.Capec;
+﻿using Cve.Net.Search.Domain.Common.Capec;
 using Cve.Net.Search.Domain.ViewModels;
 using FluentAssertions;
 using Xunit;
@@ -35,7 +35,7 @@ public class CapecContractSnapshotTests
             ],
         });
 
-        ContractSerialization.FormatForDiff(actual).Should().Be(ContractGolden.CapecViewModel,
+        ContractSerialization.FormatForDiff(actual).Should().Be(ContractSerialization.NormalizeNewlines(ContractGolden.CapecViewModel),
             "the Capec wire contract is pinned by ADR-0001; note \"techniques\" is the serialized public FIELD of ExecutionFlowTypeAttack and comes first inside the entry (Newtonsoft orders fields before properties)");
     }
 }

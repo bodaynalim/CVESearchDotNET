@@ -1,4 +1,4 @@
-using Cve.Net.Search.Domain.ViewModels;
+﻿using Cve.Net.Search.Domain.ViewModels;
 using FluentAssertions;
 using Xunit;
 
@@ -16,7 +16,7 @@ public class VendorsContractSnapshotTests
             Softwares = ["example_app"],
         });
 
-        ContractSerialization.FormatForDiff(actual).Should().Be(ContractGolden.VendorProductsViewModel,
+        ContractSerialization.FormatForDiff(actual).Should().Be(ContractSerialization.NormalizeNewlines(ContractGolden.VendorProductsViewModel),
             "the Vendors wire contract is pinned by ADR-0001; if this diff is an intended contract change, update the golden JSON after review and mirror it in CveUI fixtures");
     }
 
@@ -25,7 +25,7 @@ public class VendorsContractSnapshotTests
     {
         var actual = ContractSerialization.Serialize(new List<string> { "akamai", "example" });
 
-        ContractSerialization.FormatForDiff(actual).Should().Be(ContractGolden.VendorNameList,
+        ContractSerialization.FormatForDiff(actual).Should().Be(ContractSerialization.NormalizeNewlines(ContractGolden.VendorNameList),
             "search/{search} returns a bare JSON string array; wrapping it in an object would break CveUI");
     }
 }

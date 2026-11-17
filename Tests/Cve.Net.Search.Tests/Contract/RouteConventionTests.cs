@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.RegularExpressions;
 using CVESearch.Controllers;
 using FluentAssertions;

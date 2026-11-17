@@ -26,4 +26,11 @@ internal static class ContractSerialization
     public static string FormatForDiff(string json) =>
         JsonConvert.SerializeObject(JsonConvert.DeserializeObject(json)!, Formatting.Indented)
             .Replace("\r\n", "\n");
+
+    /// <summary>
+    /// Golden constants live in raw string literals whose newlines follow the checkout's
+    /// line-ending normalization (CRLF on Windows with autocrlf, LF in CI). The contract
+    /// is the JSON, not the checkout encoding, so comparisons must normalize newlines.
+    /// </summary>
+    public static string NormalizeNewlines(string golden) => golden.Replace("\r\n", "\n");
 }

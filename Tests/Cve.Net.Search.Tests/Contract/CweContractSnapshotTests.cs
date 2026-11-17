@@ -1,4 +1,4 @@
-using Cve.Net.Search.Domain.ViewModels;
+﻿using Cve.Net.Search.Domain.ViewModels;
 using FluentAssertions;
 using Xunit;
 
@@ -20,7 +20,7 @@ public class CweContractSnapshotTests
             RelatedCwes = ["1004"],
         });
 
-        ContractSerialization.FormatForDiff(actual).Should().Be(ContractGolden.CweViewModel,
+        ContractSerialization.FormatForDiff(actual).Should().Be(ContractSerialization.NormalizeNewlines(ContractGolden.CweViewModel),
             "the Cwe wire contract is pinned by ADR-0001; if this diff is an intended contract change, update the golden JSON after review and mirror it in CveUI fixtures");
     }
 
@@ -29,7 +29,7 @@ public class CweContractSnapshotTests
     {
         var actual = ContractSerialization.Serialize(new CweSearchCountViewModel { Total = 319 });
 
-        ContractSerialization.FormatForDiff(actual).Should().Be(ContractGolden.CweSearchCountViewModel,
+        ContractSerialization.FormatForDiff(actual).Should().Be(ContractSerialization.NormalizeNewlines(ContractGolden.CweSearchCountViewModel),
             "the count-endpoint wire contract is pinned by ADR-0001");
     }
 }
