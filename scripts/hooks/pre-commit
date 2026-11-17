@@ -1,0 +1,6 @@
+#!/bin/sh
+# pre-commit hook (tickets T09 + T13): editorconfig compliance on the whole solution.
+# Fast (a few seconds), so committing unformatted code becomes impossible early;
+# build and tests remain on the pre-push hook where a slower pipeline is acceptable.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "dotnet format --verify-no-changes --severity warn; exit \$LASTEXITCODE"
+exit $?
