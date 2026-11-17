@@ -15,12 +15,23 @@ namespace Cve.Net.Search.Tests;
 /// <summary>
 /// T03 — Golden CVE mapping fixture.
 ///
-/// A realistic NVD API 2.0 CVE payload (Fixtures/cve-golden-nvd-api.json) is pinned against
-/// explicitly hand-written expected domain objects. The expected values below were authored
-/// by hand from the mapping rules in <see cref="ToMongoModelExtensions"/> and
-/// <see cref="VulnerabilitiesProfile"/> — they are NOT snapshots of the current output.
-/// If one of these tests fails with a specific field difference, the mapping (or its rules)
-/// has changed and the golden expectation must be reviewed deliberately.
+/// The fixture (Fixtures/cve-golden-nvd-api.json) is the unmodified <c>vulnerabilities[0]</c>
+/// element captured from the real NVD API 2.0 endpoint
+/// https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-1999-0001 (pretty-printed only,
+/// no values edited). The expected domain objects below were authored by hand from the mapping
+/// rules in <see cref="ToMongoModelExtensions"/> and <see cref="VulnerabilitiesProfile"/> —
+/// they are NOT snapshots of the current output. If one of these tests fails with a specific
+/// field difference, the mapping (or its rules) has changed and the golden expectation must be
+/// reviewed deliberately.
+///
+/// Edge-case trade-off of the real record (CVE-1999-0001): it naturally covers missing fields
+/// (no CVSS v3/v3.1 metrics, no vendorComments, references without "tags"), 0-element arrays
+/// (references carry no tags → empty after mapping) and 1/many-element arrays (weaknesses,
+/// descriptions, 23 cpeMatch entries). It does NOT cover: special characters in the FIRST
+/// description (only the Spanish one has accents — but Summary takes just the first
+/// description, so they never reach the domain model), a non-vulnerable cpeMatch, and
+/// version-range CPE properties. Those remain covered by the in-code tests in
+/// CveMappingTests.
 /// </summary>
 public class CveMappingGoldenFixtureTests
 {
@@ -47,117 +58,163 @@ public class CveMappingGoldenFixtureTests
         var cve = LoadGoldenCve();
 
         cve.Cve.Descriptions.Should().HaveCount(2);
-        cve.Cve.References.Should().HaveCount(3);
-        cve.Cve.References.Should().Contain(r => r.Tags != null && r.Tags.Count == 0, "an explicit zero-element array");
-        cve.Cve.Weaknesses.Should().HaveCount(2);
+        cve.Cve.References.Should().HaveCount(4);
+        cve.Cve.References.Should().OnlyContain(r => r.Tags == null, "real NVD references here carry no tags at all");
+        cve.Cve.Weaknesses.Should().HaveCount(1);
         cve.Cve.Metrics!.CvssMetricV2.Should().HaveCount(1);
-        cve.Cve.Metrics.CvssMetricV30.Should().HaveCount(1);
-        cve.Cve.Metrics.CvssMetricV31.Should().HaveCount(1);
+        cve.Cve.Metrics.CvssMetricV30.Should().BeNull("the record has no CVSS 3.0 metric");
+        cve.Cve.Metrics.CvssMetricV31.Should().BeNull("the record has no CVSS 3.1 metric");
         cve.Cve.Configurations.Should().HaveCount(1);
         cve.Cve.Configurations!.Single().Nodes.Should().HaveCount(1);
-        cve.Cve.Configurations!.Single().Nodes!.Single().CpeMatch.Should().HaveCount(3);
+        cve.Cve.Configurations!.Single().Nodes!.Single().CpeMatch.Should().HaveCount(23);
+        cve.Cve.Configurations!.Single().Nodes!.Single().CpeMatch.Should().OnlyContain(c => c.Vulnerable);
 
         // Fields intentionally absent from the payload (missing fields must map to defaults/nulls):
         cve.Cve.VendorComments.Should().BeNull();
-        cve.Cve.References.Should().Contain(r => r.Source == null, "a reference without source");
     }
 
     [Fact]
     public void GoldenCve_MapsToExpectedMongoModel()
     {
+        // Non-trivial rule: the pre-2016 NVD payload has NO UTC offset in the timestamps, so
+        // DateTimeOffset (and therefore .UtcDateTime) is resolved against the machine's local
+        // timezone — the expectation deliberately mirrors the production parse rule instead of
+        // hard-coding a magic instant.
+        var expectedPublished = DateTimeOffset.Parse("1999-12-30T05:00:00.000").UtcDateTime;
+        var expectedModified = DateTimeOffset.Parse("2026-06-16T21:47:13.977").UtcDateTime;
+
         var expected = new CveMongoModel
         {
-            CveId = "CVE-2021-45046",
-            Assigner = "security@apache.org",
-            Published = new DateTime(2021, 12, 13, 16, 15, 9, 333, DateTimeKind.Utc),
-            Modified = new DateTime(2024, 11, 21, 6, 27, 13, 587, DateTimeKind.Utc),
-            // Every weakness entry is flattened into one ProblemData with its CWE id(s).
+            CveId = "CVE-1999-0001",
+            Assigner = "cve@mitre.org",
+            Published = expectedPublished,
+            Modified = expectedModified,
+            // Non-trivial rule: every weakness entry becomes one ProblemData with its CWE id(s).
             Cwes = new[]
             {
-                new ProblemData { Cwes = new[] { "CWE-502" } },
-                new ProblemData { Cwes = new[] { "CWE-78" } },
+                new ProblemData { Cwes = new[] { "CWE-20" } },
             },
-            // Non-trivial rule: Summary is ONLY the first description of the payload,
-            // regardless of language; the French one is dropped (not joined).
-            Summary = "It was found that log4j & JNDI: <component> permits \"trusted\" lookup chains — café déjà vu",
+            // Non-trivial rule: Summary is ONLY the first description of the payload, regardless
+            // of language; the Spanish one is dropped (not joined).
+            Summary = "ip_input.c in BSD-derived TCP/IP implementations allows remote attackers to cause a denial of service (crash or hang) via crafted packets.",
             Cvss2 = new CvssTwo
             {
                 Access = new AccessTwo { Vector = "NETWORK", Complexity = "LOW", Authentication = "NONE" },
-                VectorString = "AV:N/AC:L/Au:N/C:P/I:P/A:P",
-                BaseScore = 7.5,
+                VectorString = "AV:N/AC:L/Au:N/C:N/I:N/A:P",
+                BaseScore = 5.0,
                 ExploitabilityScore = 10.0,
-                ImpactScore = 6.4,
-                Impact = new Impact { Availability = "PARTIAL", Confidentiality = "PARTIAL", Integrity = "PARTIAL" },
+                ImpactScore = 2.9,
+                Impact = new Impact { Availability = "PARTIAL", Confidentiality = "NONE", Integrity = "NONE" },
                 // Non-obvious: Version/enum-to-string uses plain Enum.ToString(), and the generated
                 // enum member for CVSS "2.0" is named `_2_0`, so the domain string is "_2_0" (not "2.0").
                 Version = "_2_0",
                 // Non-trivial rule: CVSS v2 Severity comes from the metric's flat baseSeverity field,
                 // NOT from CvssData (the v2 cvssData has no baseSeverity).
-                Severity = "HIGH",
+                Severity = "MEDIUM",
             },
-            // Non-trivial rule: Cvss3 takes cvssMetricV30 (3.0), Cvss31 takes cvssMetricV31 — both are kept.
-            Cvss3 = new CvssThree
-            {
-                Attack = new AttackThree { Vector = "NETWORK", Complexity = "LOW", PrivilegesRequired = "NONE", Scope = "CHANGED", UserInteraction = "NONE" },
-                VectorString = "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
-                BaseScore = 9.8,
-                ExploitabilityScore = 3.9,
-                ImpactScore = 6.0,
-                Impact = new Impact { Availability = "HIGH", Confidentiality = "HIGH", Integrity = "HIGH" },
-                BaseSeverity = "CRITICAL",
-                Version = "_3_0",
-            },
-            Cvss31 = new CvssThree
-            {
-                Attack = new AttackThree { Vector = "NETWORK", Complexity = "HIGH", PrivilegesRequired = "LOW", Scope = "UNCHANGED", UserInteraction = "NONE" },
-                VectorString = "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
-                BaseScore = 6.5,
-                ExploitabilityScore = 1.8,
-                ImpactScore = 3.6,
-                Impact = new Impact { Availability = "NONE", Confidentiality = "HIGH", Integrity = "NONE" },
-                BaseSeverity = "HIGH",
-                Version = "_3_1",
-            },
+            Cvss3 = null, // Real edge case: a CVE with no CVSS v3 metric at all.
+            Cvss31 = null,
             // Non-trivial rules: Name is filled from the URL (NVD API has no separate name),
-            // Refsource from "source", and Tags keeps array shape (empty stays empty).
+            // Refsource from "source"; tags are absent in the payload → empty arrays, NOT null.
             References = new[]
             {
-                new Reference { Url = "https://logging.apache.org/log4j/2.x/security.html", Name = "https://logging.apache.org/log4j/2.x/security.html", Refsource = "security@apache.org", Tags = Array.Empty<string>() },
-                new Reference { Url = "https://nvd.nist.gov/general/cve-process", Name = "https://nvd.nist.gov/general/cve-process", Refsource = null, Tags = Array.Empty<string>() },
-                new Reference { Url = "https://www.cve.org/CVERecord?id=CVE-2021-45046", Name = "https://www.cve.org/CVERecord?id=CVE-2021-45046", Refsource = "cna", Tags = new[] { "Vendor Advisory", "Exploit" } },
+                new Reference { Url = "http://www.openbsd.org/errata23.html#tcpfix", Name = "http://www.openbsd.org/errata23.html#tcpfix", Refsource = "cve@mitre.org", Tags = Array.Empty<string>() },
+                new Reference { Url = "http://www.osvdb.org/5707", Name = "http://www.osvdb.org/5707", Refsource = "cve@mitre.org", Tags = Array.Empty<string>() },
+                new Reference { Url = "http://www.openbsd.org/errata23.html#tcpfix", Name = "http://www.openbsd.org/errata23.html#tcpfix", Refsource = "af854a3a-2127-422b-91ae-364da2661108", Tags = Array.Empty<string>() },
+                new Reference { Url = "http://www.osvdb.org/5707", Name = "http://www.osvdb.org/5707", Refsource = "af854a3a-2127-422b-91ae-364da2661108", Tags = Array.Empty<string>() },
             },
-            // Non-trivial rule: only cpeMatch entries with vulnerable=true survive, in payload order;
-            // the version-range properties are carried over; the non-vulnerable Linux kernel entry is dropped.
+            // Non-trivial rule: every cpeMatch is vulnerable here, so all 23 URIs survive, in payload order.
             VulnerableConfigurations = new[]
             {
-                new CpeTwoThree { CpeUri = "cpe:2.3:a:apache:log4j:2.0:*:*:*:*:*:*:*", Vulnerable = true },
-                new CpeTwoThree
-                {
-                    CpeUri = "cpe:2.3:a:apache:log4j_core:2.14.0:*:*:*:*:*:*:*",
-                    Vulnerable = true,
-                    VersionStartIncluding = "2.0",
-                    VersionEndExcluding = "2.15.0",
-                },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:bsdi:bsd_os:3.1:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:1.0:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:1.1:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:1.1.5.1:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:1.2:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.0:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.0.1:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.0.5:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.1.5:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.1.6:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.1.6.1:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.1.7:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.1.7.1:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.2:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.2.2:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.2.3:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.2.4:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.2.5:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.2.6:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:2.2.8:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:freebsd:freebsd:3.0:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:openbsd:openbsd:2.3:*:*:*:*:*:*:*", Vulnerable = true },
+                new CpeTwoThree { CpeUri = "cpe:2.3:o:openbsd:openbsd:2.4:*:*:*:*:*:*:*", Vulnerable = true },
             },
             // Non-trivial rule: CPE URIs are split by ':' (empty segments removed) and grouped by
             // vendor → software; the OS/bitness segments here are the literal "*" (RemoveEmptyEntries
-            // does NOT collapse '*' into empty), so Version/Os/Bitness is "2.0"/"*"/"*" etc.
+            // does NOT collapse '*' into empty), so Version/Os/Bitness is "3.1"/"*"/"*" etc.
+            // Real edge case: one vendor ("bsdi") with a single product/version (1-element arrays).
             Products = new[]
             {
                 new VulnerableProducts
                 {
-                    Vendor = "apache",
+                    Vendor = "bsdi",
                     Softwares = new[]
                     {
                         new SoftwareWithVersions
                         {
-                            SoftwareName = "log4j",
-                            Versions = new[] { new VersionOs { Version = "2.0", Os = "*", Bitness = "*" } },
+                            SoftwareName = "bsd_os",
+                            Versions = new[] { new VersionOs { Version = "3.1", Os = "*", Bitness = "*" } },
                         },
+                    },
+                },
+                new VulnerableProducts
+                {
+                    Vendor = "freebsd",
+                    Softwares = new[]
+                    {
                         new SoftwareWithVersions
                         {
-                            SoftwareName = "log4j_core",
-                            Versions = new[] { new VersionOs { Version = "2.14.0", Os = "*", Bitness = "*" } },
+                            SoftwareName = "freebsd",
+                            Versions = new[]
+                            {
+                                new VersionOs { Version = "1.0", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "1.1", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "1.1.5.1", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "1.2", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.0", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.0.1", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.0.5", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.1.5", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.1.6", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.1.6.1", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.1.7", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.1.7.1", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.2", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.2.2", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.2.3", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.2.4", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.2.5", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.2.6", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.2.8", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "3.0", Os = "*", Bitness = "*" },
+                            },
+                        },
+                    },
+                },
+                new VulnerableProducts
+                {
+                    Vendor = "openbsd",
+                    Softwares = new[]
+                    {
+                        new SoftwareWithVersions
+                        {
+                            SoftwareName = "openbsd",
+                            Versions = new[]
+                            {
+                                new VersionOs { Version = "2.3", Os = "*", Bitness = "*" },
+                                new VersionOs { Version = "2.4", Os = "*", Bitness = "*" },
+                            },
                         },
                     },
                 },
@@ -172,53 +229,67 @@ public class CveMappingGoldenFixtureTests
     [Fact]
     public void GoldenCve_MapsToExpectedViewModel()
     {
+        var expectedPublished = DateTimeOffset.Parse("1999-12-30T05:00:00.000").UtcDateTime;
+        var expectedModified = DateTimeOffset.Parse("2026-06-16T21:47:13.977").UtcDateTime;
+
         var expected = new CveViewModel
         {
-            CveId = "CVE-2021-45046",
-            Assigner = "security@apache.org",
-            Published = new DateTime(2021, 12, 13, 16, 15, 9, 333, DateTimeKind.Utc),
-            Modified = new DateTime(2024, 11, 21, 6, 27, 13, 587, DateTimeKind.Utc),
-            // Non-trivial rule: the ProblemData wrappers are flattened away — every CWE id of every
-            // weakness entry is collected into one flat string array.
-            Cwes = new[] { "CWE-502", "CWE-78" },
-            Summary = "It was found that log4j & JNDI: <component> permits \"trusted\" lookup chains — café déjà vu",
-            // Non-trivial rule: ReferencesUrls is a pure projection of Reference.Url in payload order.
+            CveId = "CVE-1999-0001",
+            Assigner = "cve@mitre.org",
+            Published = expectedPublished,
+            Modified = expectedModified,
+            // Non-trivial rule: the ProblemData wrappers are flattened away — every CWE id of
+            // every weakness entry is collected into one flat string array.
+            Cwes = new[] { "CWE-20" },
+            Summary = "ip_input.c in BSD-derived TCP/IP implementations allows remote attackers to cause a denial of service (crash or hang) via crafted packets.",
+            // Non-trivial rule: ReferencesUrls is a pure projection of Reference.Url in payload
+            // order — including the duplicated URLs the real record carries.
             ReferencesUrls = new[]
             {
-                "https://logging.apache.org/log4j/2.x/security.html",
-                "https://nvd.nist.gov/general/cve-process",
-                "https://www.cve.org/CVERecord?id=CVE-2021-45046",
+                "http://www.openbsd.org/errata23.html#tcpfix",
+                "http://www.osvdb.org/5707",
+                "http://www.openbsd.org/errata23.html#tcpfix",
+                "http://www.osvdb.org/5707",
             },
             // Non-trivial rule: only the CPE URI string is projected from VulnerableConfigurations.
             VulnerableConfigurations = new[]
             {
-                "cpe:2.3:a:apache:log4j:2.0:*:*:*:*:*:*:*",
-                "cpe:2.3:a:apache:log4j_core:2.14.0:*:*:*:*:*:*:*",
+                "cpe:2.3:o:bsdi:bsd_os:3.1:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:1.0:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:1.1:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:1.1.5.1:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:1.2:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.0.1:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.0.5:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.1.5:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.1.6:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.1.6.1:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.1.7:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.1.7.1:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.2:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.2.2:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.2.3:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.2.4:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.2.5:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.2.6:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:2.2.8:*:*:*:*:*:*:*",
+                "cpe:2.3:o:freebsd:freebsd:3.0:*:*:*:*:*:*:*",
+                "cpe:2.3:o:openbsd:openbsd:2.3:*:*:*:*:*:*:*",
+                "cpe:2.3:o:openbsd:openbsd:2.4:*:*:*:*:*:*:*",
             },
             Cvss2 = new CvssTwo
             {
                 Access = new AccessTwo { Vector = "NETWORK", Complexity = "LOW", Authentication = "NONE" },
-                VectorString = "AV:N/AC:L/Au:N/C:P/I:P/A:P",
-                BaseScore = 7.5,
+                VectorString = "AV:N/AC:L/Au:N/C:N/I:N/A:P",
+                BaseScore = 5.0,
                 ExploitabilityScore = 10.0,
-                ImpactScore = 6.4,
-                Impact = new Impact { Availability = "PARTIAL", Confidentiality = "PARTIAL", Integrity = "PARTIAL" },
+                ImpactScore = 2.9,
+                Impact = new Impact { Availability = "PARTIAL", Confidentiality = "NONE", Integrity = "NONE" },
                 Version = "_2_0",
-                Severity = "HIGH",
+                Severity = "MEDIUM",
             },
-            // Non-trivial rule: both Cvss3 (3.0) and Cvss31 (3.1) exist in the payload, and Cvss3 —
-            // NOT Cvss31 — is what the view model exposes as "Cvss3".
-            Cvss3 = new CvssThree
-            {
-                Attack = new AttackThree { Vector = "NETWORK", Complexity = "LOW", PrivilegesRequired = "NONE", Scope = "CHANGED", UserInteraction = "NONE" },
-                VectorString = "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
-                BaseScore = 9.8,
-                ExploitabilityScore = 3.9,
-                ImpactScore = 6.0,
-                Impact = new Impact { Availability = "HIGH", Confidentiality = "HIGH", Integrity = "HIGH" },
-                BaseSeverity = "CRITICAL",
-                Version = "_3_0",
-            },
+            Cvss3 = null, // Real edge case: no CVSS v3 metric in the record → the view model exposes null.
         };
 
         var mongoModel = MapGoldenCveToMongoModel();
@@ -234,12 +305,12 @@ public class CveMappingGoldenFixtureTests
         var (mongoModel, _) = LoadGoldenCve().ToCveMongoModel();
         var viewModel = CreateMapper().Map<CveViewModel>(mongoModel);
 
-        viewModel.CveId.Should().Be("CVE-2021-45046");
-        viewModel.Cwes.Should().Equal("CWE-502", "CWE-78");
-        viewModel.Cvss3!.Version.Should().Be("_3_0", "3.0 wins when both 3.0 and 3.1 metrics exist");
+        viewModel.CveId.Should().Be("CVE-1999-0001");
+        viewModel.Cwes.Should().Equal("CWE-20");
         viewModel.Cvss2!.Version.Should().Be("_2_0", "enum names in the generated NVD types are not the wire values");
-        viewModel.VulnerableConfigurations.Should()
-            .NotContain(c => c.Contains("linux_kernel"), "non-vulnerable cpeMatch entries must be filtered out");
-        viewModel.ReferencesUrls.Should().HaveCount(3);
+        viewModel.Cvss2!.Severity.Should().Be("MEDIUM");
+        viewModel.Cvss3.Should().BeNull("a record without CVSS v3 metrics must not produce a phantom metric");
+        viewModel.VulnerableConfigurations.Should().HaveCount(23);
+        viewModel.ReferencesUrls.Should().HaveCount(4);
     }
 }
