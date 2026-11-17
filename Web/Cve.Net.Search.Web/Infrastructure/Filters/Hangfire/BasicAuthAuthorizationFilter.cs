@@ -1,9 +1,9 @@
-using Hangfire.Dashboard;
-using Microsoft.AspNetCore.Http;
+using System;
 using System.Linq;
 using System.Text;
-using System;
 using System.Text.RegularExpressions;
+using Hangfire.Dashboard;
+using Microsoft.AspNetCore.Http;
 
 namespace Cve.Net.Search.Web.Infrastructure.Hangfire;
 
@@ -42,7 +42,7 @@ public class BasicAuthAuthorizationFilter : IDashboardAuthorizationFilter
         var authUsername = authSplit[0];
         var authPassword = authSplit.Length > 1 ? authSplit[1] : throw new Exception("Unable to get password");
 
-        return _options.Users.Any(user => user.Validate(authUsername, authPassword, _options.LoginCaseSensitive)) || Unathorized(context);            
+        return _options.Users.Any(user => user.Validate(authUsername, authPassword, _options.LoginCaseSensitive)) || Unathorized(context);
     }
 
     #region Private

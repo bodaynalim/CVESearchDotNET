@@ -173,6 +173,6 @@ public class MutexAttribute : JobFilterAttribute, IElectStateFilter, IApplyState
 
     private static string GetKeyFormat(IEnumerable<object> args, string keyFormat)
     {
-        return String.Format(keyFormat, args.ToArray());
+        return string.Format(keyFormat, args.ToArray());
     }
 }

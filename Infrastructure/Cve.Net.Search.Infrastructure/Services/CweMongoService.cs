@@ -1,9 +1,9 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Cve.Application.Services;
 using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Cve.Infrastructure.Services;
 

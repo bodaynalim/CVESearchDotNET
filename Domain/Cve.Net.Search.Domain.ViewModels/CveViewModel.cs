@@ -1,5 +1,5 @@
-using Cve.Net.Search.Domain.Common.Cve;
 using System;
+using Cve.Net.Search.Domain.Common.Cve;
 
 namespace Cve.Net.Search.Domain.ViewModels;
 

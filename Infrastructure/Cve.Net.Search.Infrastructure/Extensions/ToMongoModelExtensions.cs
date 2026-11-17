@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Cve.Net.Search.Domain.Common.Capec;
 using Cve.Net.Search.Domain.Common.Cve;
 using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
@@ -5,8 +7,6 @@ using Cve.Net.Search.Domain.Database.CveXmlJsonModels.NVDApi.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Capec;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
-using System;
-using System.Linq;
 using Reference = Cve.Net.Search.Domain.Database.MongoModels.Cve.Reference;
 
 namespace Cve.Infrastructure.Extensions;

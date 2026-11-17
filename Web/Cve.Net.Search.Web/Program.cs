@@ -1,11 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 using Cve.Application.Helpers;
-using Cve.Infrastructure.Services.InitialImport;
 using Cve.Application.Services;
 using Cve.Infrastructure.AutoMapper;
 using Cve.Infrastructure.Extensions;
 using Cve.Infrastructure.Helpers;
 using Cve.Infrastructure.Services;
+using Cve.Infrastructure.Services.InitialImport;
 using Cve.Net.Search.Application.Services.Cve;
 using Cve.Net.Search.Infrastructure.Configuration;
 using Cve.Net.Search.Infrastructure.Services.Cve;

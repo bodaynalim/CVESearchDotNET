@@ -1,10 +1,10 @@
+using System.Linq;
 using AutoMapper;
-using Cve.Net.Search.Domain.ViewModels;
 using Cve.Net.Search.Domain.Database.MongoModels;
 using Cve.Net.Search.Domain.Database.MongoModels.Capec;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using Cve.Net.Search.Domain.Database.MongoModels.Cwe;
-using System.Linq;
+using Cve.Net.Search.Domain.ViewModels;
 
 namespace Cve.Infrastructure.AutoMapper;
 
@@ -12,7 +12,7 @@ public class VulnerabilitiesProfile : Profile
 {
     public VulnerabilitiesProfile()
     {
-        CreateMap<CweMongoModel,CweViewModel>()
+        CreateMap<CweMongoModel, CweViewModel>()
             .ForMember(m => m.Status, s => s.MapFrom(m => m.Status.ToString()))
             .ForMember(m => m.Abstraction, s => s.MapFrom(m => m.Abstraction.ToString()));
 

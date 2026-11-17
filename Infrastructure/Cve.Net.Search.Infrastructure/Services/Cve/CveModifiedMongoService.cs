@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Cve.Application.Services;
 using Cve.Infrastructure.Extensions;
 using Cve.Infrastructure.Services;
@@ -6,10 +10,6 @@ using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
 using Cve.Net.Search.Domain.Database.Extensions;
 using Cve.Net.Search.Domain.Database.MongoModels.Cve;
 using MongoDB.Driver;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Cve.Net.Search.Infrastructure.Services.Cve;
 
@@ -70,7 +70,7 @@ public class CveModifiedMongoService : BaseMongoService<CveModifiedMongoModel>, 
         if (changes.Any())
             await CreateNewItem(new CveModifiedMongoModel
             {
-                Changes= changes.ToArray(),
+                Changes = changes.ToArray(),
                 CveId = old.CveId,
                 Modified = newItem.Modified
             }, cancellationToken);

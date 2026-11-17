@@ -1,11 +1,11 @@
-using Cve.Application.Services;
-using Cve.Net.Search.Domain.Database.MongoModels;
-using Cve.Net.Search.Domain.Database.MongoModels.Cve;
-using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Cve.Application.Services;
+using Cve.Net.Search.Domain.Database.MongoModels;
+using Cve.Net.Search.Domain.Database.MongoModels.Cve;
+using MongoDB.Driver;
 
 namespace Cve.Infrastructure.Services;
 

@@ -1,18 +1,3 @@
-using Cve.Application.Helpers;
-using Cve.Application.Services;
-using Cve.Infrastructure.Extensions;
-using Cve.Infrastructure.Services.InitialImport;
-using Cve.Net.Search.Application.Services.Cve;
-using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
-using Cve.Net.Search.Domain.Database.CveXmlJsonModels.NVDApi.Cve;
-using Cve.Net.Search.Domain.Database.MongoModels.Cve;
-using Cve.Net.Search.Infrastructure.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Hangfire;
-using Hangfire.States;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,6 +8,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
+using Cve.Application.Helpers;
+using Cve.Application.Services;
+using Cve.Infrastructure.Extensions;
+using Cve.Infrastructure.Services.InitialImport;
+using Cve.Net.Search.Application.Services.Cve;
+using Cve.Net.Search.Domain.Database.CveXmlJsonModels;
+using Cve.Net.Search.Domain.Database.CveXmlJsonModels.NVDApi.Cve;
+using Cve.Net.Search.Domain.Database.MongoModels.Cve;
+using Cve.Net.Search.Infrastructure.Configuration;
+using Hangfire;
+using Hangfire.States;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Cve.Infrastructure.Helpers;
 
@@ -423,7 +423,7 @@ public class VulnerabilitiesJsonHelper : IVulnerabilitiesJsonHelper
             using (var client = _httpClientFactory.CreateClient())
             {
                 jsonFile = await DownloadAndExtract(client, tempRandomFile, tempRandomDir,
-                    url, cancellationToken);                   
+                    url, cancellationToken);
             }
 
             await DeserializeAndSaveCveJson(jsonFile,
@@ -463,7 +463,7 @@ public class VulnerabilitiesJsonHelper : IVulnerabilitiesJsonHelper
         {
             using (var client = _httpClientFactory.CreateClient())
             {
-                await Download(client, tempRandomFile, url, cancellationToken);                    
+                await Download(client, tempRandomFile, url, cancellationToken);
             }
 
             await DeserializeAndSaveCveJson(tempRandomFile,

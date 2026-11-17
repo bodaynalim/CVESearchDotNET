@@ -1,7 +1,7 @@
-using System.Collections;
-using System.Text;
 using System;
+using System.Collections;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Cve.Net.Search.Web.Infrastructure.Hangfire;
 
@@ -43,7 +43,7 @@ public class BasicAuthAuthorizationUser
     /// <returns></returns>
     public bool Validate(string login, string password, bool loginCaseSensitive)
     {
-        if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password) || 
+        if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password) ||
             !login.Equals(Login, loginCaseSensitive ? StringComparison.CurrentCulture : StringComparison.OrdinalIgnoreCase))
             return false;
 

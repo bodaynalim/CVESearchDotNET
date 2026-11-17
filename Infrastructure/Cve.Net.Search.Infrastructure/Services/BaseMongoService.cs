@@ -1,14 +1,14 @@
+using System.Threading.Tasks;
 using Cve.Application.Services;
 using Cve.Net.Search.Domain.Database.MongoModels;
 using HotChocolate;
 using HotChocolate.Data;
 using MongoDB.Driver;
-using System.Threading.Tasks;
 
 namespace Cve.Infrastructure.Services;
 
 public abstract class BaseMongoService<T> : IBaseMongoService<T>
-    where T: BaseMongoModel
+    where T : BaseMongoModel
 {
     /// <summary>
     /// Constructor of the base service.

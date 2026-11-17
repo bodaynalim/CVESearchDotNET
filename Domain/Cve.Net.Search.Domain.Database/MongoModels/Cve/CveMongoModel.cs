@@ -1,8 +1,8 @@
-using Cve.Net.Search.Domain.Common.Cve;
-using Cve.Net.Search.Domain.Database.MongoModels.Extensions;
 using System;
 using System.ComponentModel;
 using System.Linq;
+using Cve.Net.Search.Domain.Common.Cve;
+using Cve.Net.Search.Domain.Database.MongoModels.Extensions;
 
 namespace Cve.Net.Search.Domain.Database.MongoModels.Cve;
 
@@ -42,7 +42,7 @@ public class CveMongoModel : BaseMongoModel
     [Description("Common Platform Enumerations")]
     public CpeTwoThree[] VulnerableConfigurations { get; set; }
 
-    public VulnerableProducts[] Products { get; set; }        
+    public VulnerableProducts[] Products { get; set; }
 }
 
 public class Reference
@@ -67,7 +67,7 @@ public class ProblemData
 
     public override string ToString()
     {
-        return Cwes?.Any() == true 
+        return Cwes?.Any() == true
             ? Cwes.JoinToString(", ")
             : string.Empty;
     }

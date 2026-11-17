@@ -1,15 +1,15 @@
-using AutoMapper;
-using Cve.Infrastructure.Extensions;
-using Cve.Net.Search.Application.Services.Cve;
-using Cve.Net.Search.Domain.ViewModels;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
+using Cve.Infrastructure.Extensions;
+using Cve.Net.Search.Application.Services.Cve;
+using Cve.Net.Search.Domain.ViewModels;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CVESearch.Controllers;
 
